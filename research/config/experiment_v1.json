@@ -1,0 +1,23 @@
+{
+  "experiment_id": "calibration_vs_default_v1",
+  "description": "Primary experiment. Does personal calibration improve the accuracy of distraction detection compared with population-default thresholds, and how does performance change as sensor noise increases?",
+  "seed": 20261026,
+  "n_students": 30,
+  "frame_rate_hz": 10,
+  "session_duration_s": 1200,
+  "calibration_protocol_s": {"center": 10, "corner_each": 3, "down": 4},
+  "noise_levels": {
+    "low":    {"pose_sd": 1.0, "ear_sd": 0.010, "gaze_sd": 0.04, "dropout_rate": 0.002, "dropout_mean_s": 0.3, "extreme_yaw_deg": 60, "extreme_yaw_miss_prob": 0.5},
+    "medium": {"pose_sd": 2.5, "ear_sd": 0.020, "gaze_sd": 0.08, "dropout_rate": 0.006, "dropout_mean_s": 0.5, "extreme_yaw_deg": 60, "extreme_yaw_miss_prob": 0.5},
+    "high":   {"pose_sd": 4.0, "ear_sd": 0.035, "gaze_sd": 0.15, "dropout_rate": 0.015, "dropout_mean_s": 0.8, "extreme_yaw_deg": 60, "extreme_yaw_miss_prob": 0.5}
+  },
+  "conditions": [
+    {"name": "uncalibrated", "use_calibration": false, "engine_overrides": {}},
+    {"name": "calibrated",   "use_calibration": true,  "engine_overrides": {}}
+  ],
+  "primary_comparison": {"treatment": "calibrated", "control": "uncalibrated", "metric": "f1_distracted"},
+  "secondary_metrics": ["accuracy", "precision_distracted", "recall_distracted", "specificity", "focus_score_abs_error", "episode_recall", "median_latency_s", "false_alarms_per_hour"],
+  "evaluation": {"detection_grace_s": 0.5},
+  "alpha": 0.05,
+  "bootstrap_resamples": 10000
+}

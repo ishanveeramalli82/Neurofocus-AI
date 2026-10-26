@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>History · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/history.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <h1>Session history</h1>
+        <p>Every session you have recorded. Select one for its full timeline.</p>
+      </div>
+    </div>
+    <section id="listView" class="card">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Session</th><th>Subject</th><th>Started</th><th>Length</th><th>Calibrated</th><th>Distractions</th><th>Score</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+      <div class="row between"><span class="tiny" id="pageLabel"></span>
+        <div class="row"><button class="btn small" id="prevBtn">Previous</button><button class="btn small" id="nextBtn">Next</button></div></div>
+    </section>
+    <section id="detailView" class="hidden stack">
+      <a href="/history" class="small">← All sessions</a>
+      <div class="grid cols-3">
+        <div class="card center"><div id="detailRing"></div></div>
+        <div class="card span-2">
+          <div class="card-head"><h2 id="dTitle"></h2><span class="badge" id="dStatus"></span></div>
+          <div class="grid cols-3">
+            <div class="stat"><div class="label">Length</div><div class="value" id="dLen"></div></div>
+            <div class="stat"><div class="label">Focused</div><div class="value" id="dFocused"></div></div>
+            <div class="stat"><div class="label">Distractions</div><div class="value" id="dDis"></div></div>
+          </div>
+          <p class="small muted" id="dMeta"></p>
+          <p class="small muted" id="dCal"></p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Attention timeline</h3><span class="tiny" id="dTimeLabel"></span></div>
+        <div id="dTimeline"></div>
+        <div class="legend" id="dLegend"></div>
+      </div>
+      <div class="grid cols-2">
+        <div class="card"><div class="card-head"><h3>Rolling Focus Score (60 s window)</h3></div><div id="dLive"></div></div>
+        <div class="card"><div class="card-head"><h3>Time by distraction type</h3></div><div id="dBreakdown"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Notes</h3></div>
+        <div class="field"><label for="dTitleInput">Title</label><input id="dTitleInput" maxlength="120"></div>
+        <div class="field"><label for="dSubjectInput">Subject</label><input id="dSubjectInput" maxlength="60"></div>
+        <textarea id="dNotes" maxlength="2000"></textarea>
+        <div class="row between"><button class="btn primary small" id="saveNotes">Save</button><button class="btn danger small" id="deleteBtn">Delete session</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

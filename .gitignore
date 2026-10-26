@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+instance/
+.pytest_cache/
+research/data/raw/*
+research/data/processed/*
+!research/data/raw/.gitkeep
+!research/data/processed/.gitkeep

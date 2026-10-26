@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Focus Session · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/session.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <h1>Focus Session</h1>
+        <p>Your camera is analysed on this device. Only six numbers per frame are sent to the server, never video.</p>
+      </div>
+    </div>
+
+    <!-- Step 1: setup -->
+    <section id="setup" class="grid cols-2">
+      <div class="card">
+        <h2>Set up your session</h2>
+        <div id="setupError" class="alert error hidden" role="alert"></div>
+        <form id="setupForm">
+          <div class="field">
+            <label for="title">What are you working on?</label>
+            <input id="title" maxlength="120" placeholder="e.g. Chapter 7 practice problems" required>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="subject">Subject</label>
+              <input id="subject" maxlength="60" placeholder="e.g. Chemistry" list="subjectList">
+              <datalist id="subjectList"></datalist>
+            </div>
+            <div class="field">
+              <label for="planned">Planned length (minutes)</label>
+              <input id="planned" type="number" min="5" max="240" value="50">
+            </div>
+          </div>
+          <div class="field">
+            <label for="eventSel">Linked schedule block (optional)</label>
+            <select id="eventSel"><option value="">None</option></select>
+          </div>
+          <div class="field">
+            <label class="check"><input type="checkbox" id="doCal" checked> Calibrate first (recommended, about 30 seconds)</label>
+          </div>
+          <button class="btn primary big" type="submit" id="startBtn">Start camera</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>How it works</h2>
+        <ol class="small muted">
+          <li><strong>Calibration.</strong> You look at the screen centre, its four corners and then your desk. This teaches NeuroFocus where <em>your</em> screen is relative to <em>your</em> camera.</li>
+          <li><strong>Tracking.</strong> About 10 times a second a face-landmark model estimates head direction, eye openness and iris position.</li>
+          <li><strong>Classification.</strong> Each frame is compared with your calibration: <span class="s-FOCUSED">focused</span>, <span class="s-LOOKING_AWAY">looking away</span>, <span class="s-LOOKING_DOWN">looking down</span>, <span class="s-EYES_CLOSED">eyes closed</span> or <span class="s-ABSENT">not detected</span>. A state must last ~2 s (1 s for closed eyes) before it counts, so blinks and quick glances are ignored.</li>
+          <li><strong>Focus Score</strong> = percentage of session time classified as focused.</li>
+        </ol>
+        <div class="disclaimer small">NeuroFocus measures where your head and eyes point, not what you are thinking. Looking down to take notes may be counted as "looking down". It is a study aid, not a medical or diagnostic tool.</div>
+      </div>
+    </section>
+
+    <!-- Step 2/3: camera + live -->
+    <section id="live" class="session-grid hidden">
+      <div class="stack">
+        <div class="card">
+          <div class="video-box" id="videoBox">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
+            <div class="overlay-msg" id="videoMsg">Starting camera…</div>
+          </div>
+          <div class="row between small">
+            <label class="check"><input type="checkbox" id="privacyBlur"> Blur my preview</label>
+            <label class="check"><input type="checkbox" id="showSensors"> Show sensor data</label>
+            <span class="tiny" id="fps"></span>
+          </div>
+          <div id="sensorBox" class="feature-readout hidden"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>This session</h3><span class="tiny" id="timeLabel"></span></div>
+          <div id="liveTimeline"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card center">
+          <div id="statePill" class="state-pill"><span class="dot"></span><span>Waiting…</span></div>
+          <div id="ringLive"></div>
+          <div class="grid cols-3">
+            <div class="stat"><div class="label">Elapsed</div><div class="value" id="elapsed">0:00</div></div>
+            <div class="stat"><div class="label">Session score</div><div class="value" id="sessScore">–</div></div>
+            <div class="stat"><div class="label">Distractions</div><div class="value" id="distractions">0</div></div>
+          </div>
+          <div class="meter" id="planMeter"><div></div></div>
+          <div class="tiny" id="planLabel"></div>
+        </div>
+        <div class="card">
+          <div id="liveAlert" class="alert warn hidden" role="status"></div>
+          <div id="calInfo" class="small muted"></div>
+          <div class="field">
+            <label for="notes">Session notes</label>
+            <textarea id="notes" maxlength="2000" placeholder="What did you get done?"></textarea>
+          </div>
+          <label class="check small hidden" id="completeWrap"><input type="checkbox" id="completeEvent" checked> Mark linked schedule block as done</label>
+          <div class="row">
+            <button class="btn" id="pauseBtn">Pause</button>
+            <button class="btn danger" id="endBtn">End session</button>
+          </div>
+          <p class="tiny">Tip: keep this window visible (for example side-by-side with your work) for the most reliable tracking.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Calibration overlay -->
+    <div id="calStage" class="cal-stage hidden">
+      <div id="calTarget" class="cal-target hidden"></div>
+      <div class="cal-instructions">
+        <h2 id="calTitle">Calibration</h2>
+        <p id="calText" class="muted"></p>
+        <div class="meter cal-progress"><div id="calBar"></div></div>
+        <div id="calResult" class="hidden"></div>
+        <button class="btn ghost small" id="calCancel">Cancel</button>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

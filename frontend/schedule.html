@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/schedule.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <h1>Schedule</h1>
+        <p id="weekLabel"></p>
+      </div>
+      <div class="row">
+        <div class="tabs" id="viewTabs"><button data-view="week" class="active">Week</button><button data-view="agenda">Agenda</button></div>
+        <button class="btn small" id="prevWeek" aria-label="Previous week">←</button>
+        <button class="btn small" id="thisWeek">Today</button>
+        <button class="btn small" id="nextWeek" aria-label="Next week">→</button>
+        <button class="btn primary" id="newEventBtn">+ New event</button>
+      </div>
+    </div>
+
+    <div class="schedule-layout">
+      <div class="stack">
+        <div id="weekView" class="week-scroll"><div class="week-inner"><div class="week" id="week"></div></div></div>
+        <div id="agendaView" class="card hidden"><div id="agenda"></div></div>
+        <div class="legend">
+          <span class="k-study"><i class="dot kdot"></i>Study block</span>
+          <span class="k-class"><i class="dot kdot"></i>Class</span>
+          <span class="k-exam"><i class="dot kdot"></i>Exam</span>
+          <span class="k-break"><i class="dot kdot"></i>Break</span>
+          <span class="k-other"><i class="dot kdot"></i>Other</span>
+          <span class="tiny">Click an empty slot to add an event.</span>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="card-head"><h2>This week</h2></div>
+          <div class="stat"><div class="value" id="weekStudy">–</div><div class="sub" id="weekStudySub"></div></div>
+          <div class="meter" id="weekMeter"><div></div></div>
+          <p class="tiny" id="weekFocus"></p>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Tasks &amp; assignments</h2></div>
+          <form id="taskForm">
+            <div class="field"><input id="tTitle" maxlength="160" placeholder="Add a task, e.g. History essay" required aria-label="Task title"></div>
+            <div class="field"><label for="tDue">Due</label><input id="tDue" type="datetime-local"></div>
+            <div class="field-row">
+              <div class="field"><label for="tEst">Minutes needed</label><input id="tEst" type="number" min="5" max="6000" placeholder="e.g. 120"></div>
+              <div class="field"><label for="tPrio">Priority</label><select id="tPrio"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+            </div>
+            <div class="field"><label for="tSubject">Subject</label><input id="tSubject" maxlength="60"></div>
+            <button class="btn primary small" type="submit">Add task</button>
+          </form>
+          <div id="tasks"></div>
+        </div>
+      </div>
+    </div>
+
+    <dialog id="eventDialog">
+      <form id="eventForm" method="dialog">
+        <div class="dialog-body">
+          <h2 id="evDialogTitle">New event</h2>
+          <div id="evError" class="alert error hidden" role="alert"></div>
+          <div class="field"><label for="evTitle">Title</label><input id="evTitle" maxlength="120" required></div>
+          <div class="field-row">
+            <div class="field"><label for="evKind">Type</label>
+              <select id="evKind"><option value="study">Study block</option><option value="class">Class</option><option value="exam">Exam</option><option value="break">Break</option><option value="other">Other</option></select></div>
+            <div class="field"><label for="evSubject">Subject</label><input id="evSubject" maxlength="60"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="evDate">Date</label><input id="evDate" type="date" required></div>
+            <div class="field-row">
+              <div class="field"><label for="evStart">Start</label><input id="evStart" type="time" required></div>
+              <div class="field"><label for="evEnd">End</label><input id="evEnd" type="time" required></div>
+            </div>
+          </div>
+          <div class="field" id="repeatField"><label for="evRepeat">Repeat weekly for</label>
+            <select id="evRepeat"><option value="0">Does not repeat</option><option value="3">3 more weeks</option><option value="7">7 more weeks</option><option value="11">11 more weeks</option><option value="15">15 more weeks</option></select></div>
+          <div class="field"><label for="evNotes">Notes</label><textarea id="evNotes" maxlength="2000"></textarea></div>
+          <label class="check small hidden" id="evDoneWrap"><input type="checkbox" id="evDone"> Completed</label>
+          <p class="tiny" id="evFocus"></p>
+        </div>
+        <div class="dialog-foot">
+          <button type="button" class="btn danger hidden" id="evDelete">Delete</button>
+          <a class="btn hidden" id="evStartSession">Start session</a>
+          <span class="grow"></span>
+          <button type="button" class="btn" id="evCancel">Cancel</button>
+          <button type="submit" class="btn primary" id="evSave">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="planDialog">
+      <form id="planForm" method="dialog">
+        <div class="dialog-body">
+          <h2>Auto-plan study blocks</h2>
+          <p class="small muted" id="planInfo"></p>
+          <div class="field"><label for="pEst">Total time needed (minutes)</label><input id="pEst" type="number" min="5" max="6000" required></div>
+          <div class="field-row">
+            <div class="field"><label for="pBlock">Block length (min)</label><input id="pBlock" type="number" min="15" max="180" value="50"></div>
+            <div class="field"><label for="pMax">Max blocks per day</label><input id="pMax" type="number" min="1" max="6" value="2"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="pStart">Earliest start</label><input id="pStart" type="time" value="16:00"></div>
+            <div class="field"><label for="pEnd">Latest end</label><input id="pEnd" type="time" value="21:00"></div>
+          </div>
+          <p class="tiny">Blocks are placed in free time only, with 15 minutes between them, before the due date (or within 7 days if there is none).</p>
+        </div>
+        <div class="dialog-foot"><button type="button" class="btn" id="planCancel">Cancel</button><button class="btn primary" type="submit">Plan it</button></div>
+      </form>
+    </dialog>
+  </main>
+</div>
+</body>
+</html>

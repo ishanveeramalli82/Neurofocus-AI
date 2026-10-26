@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/settings.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head"><div><button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button><h1>Settings</h1><p>Profile, study preferences, privacy and your data.</p></div></div>
+    <div class="grid cols-2">
+      <form class="card" id="profileForm">
+        <h2>Profile &amp; study preferences</h2>
+        <div class="field"><label for="name">Name</label><input id="name" maxlength="60" required></div>
+        <div class="field-row">
+          <div class="field"><label for="goal">Daily focus goal (min)</label><input id="goal" type="number" min="10" max="900"></div>
+          <div class="field"><label for="sessionLen">Default session length (min)</label><input id="sessionLen" type="number" min="5" max="240"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="breakLen">Break length (min)</label><input id="breakLen" type="number" min="1" max="60"></div>
+          <div class="field"><label for="alertAfter">Nudge me after distracted for (s)</label><input id="alertAfter" type="number" min="5" max="600"></div>
+        </div>
+        <div class="field"><label class="check"><input type="checkbox" id="sound"> Play a soft chime with nudges</label></div>
+        <div class="field"><label for="theme">Theme</label><select id="theme"><option value="">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+        <button class="btn primary" type="submit">Save</button>
+      </form>
+      <div class="stack">
+        <form class="card" id="pwForm">
+          <h2>Change password</h2>
+          <div class="field"><label for="curPw">Current password</label><input id="curPw" type="password" autocomplete="current-password" required></div>
+          <div class="field"><label for="newPw">New password</label><input id="newPw" type="password" autocomplete="new-password" minlength="10" required></div>
+          <button class="btn" type="submit">Update password</button>
+        </form>
+        <div class="card">
+          <h2>Privacy &amp; data</h2>
+          <ul class="small muted">
+            <li>Video is processed in your browser and never uploaded or stored.</li>
+            <li>Stored per session: calibration values, one attention state per second, distraction episodes, and the scores shown to you.</li>
+            <li>Passwords are stored only as salted, slow hashes (scrypt).</li>
+          </ul>
+          <div class="row"><a class="btn" href="/api/account/export" download>Download my data (JSON)</a></div>
+          <hr>
+          <h3 class="s-LOOKING_AWAY">Delete account</h3>
+          <p class="small muted">Permanently deletes your account, sessions, schedule and tasks.</p>
+          <form id="deleteForm" class="row">
+            <input id="delPw" type="password" placeholder="Confirm with your password" autocomplete="current-password" required aria-label="Password" class="grow">
+            <button class="btn danger" type="submit">Delete everything</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

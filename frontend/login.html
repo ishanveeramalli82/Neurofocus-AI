@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/auth.js"></script>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="card auth-card">
+    <a class="brand" href="/"><span class="brand-mark">◎</span>NeuroFocus AI</a>
+    <h1 class="center">Welcome back</h1>
+    <p class="muted center small">Sign in to continue your study sessions.</p>
+    <div id="error" class="alert error hidden" role="alert"></div>
+    <form id="loginForm" novalidate>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+      <button class="btn primary big" type="submit" id="submitBtn">Sign in</button>
+    </form>
+    <p class="small center">New here? <a href="/register">Create an account</a></p>
+  </div>
+</div>
+</body>
+</html>

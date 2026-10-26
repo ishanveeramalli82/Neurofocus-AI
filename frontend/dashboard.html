@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/dashboard.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <h1 id="greeting">Dashboard</h1>
+        <p id="dateLabel"></p>
+      </div>
+      <a class="btn primary big" href="/session">Start focus session</a>
+    </div>
+    <div class="grid cols-4">
+      <div class="card stat"><div class="label">Focused today</div><div class="value" id="todayMin">–</div>
+        <div class="meter" id="goalMeter"><div></div></div><div class="sub" id="goalLabel"></div></div>
+      <div class="card stat"><div class="label">Focus Score (7 days)</div><div class="value" id="weekScore">–</div><div class="sub">time-weighted across sessions</div></div>
+      <div class="card stat"><div class="label">Study streak</div><div class="value" id="streak">–</div><div class="sub">days in a row</div></div>
+      <div class="card stat"><div class="label">Study blocks this week</div><div class="value" id="weekPlan">–</div><div class="sub" id="weekPlanSub"></div></div>
+    </div>
+    <div class="grid cols-3" id="dashMain">
+      <div class="card span-2">
+        <div class="card-head"><h2>Focus Score, last 14 days</h2><a class="small" href="/analytics">Analytics →</a></div>
+        <div id="trend"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Today</h2><a class="small" href="/schedule">Schedule →</a></div>
+        <ul class="list" id="todayList"></ul>
+      </div>
+      <div class="card span-2">
+        <div class="card-head"><h2>Recent sessions</h2><a class="small" href="/history">All →</a></div>
+        <div class="table-wrap"><table><thead><tr><th>Session</th><th>When</th><th>Length</th><th>Score</th></tr></thead><tbody id="recent"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Due soon</h2></div>
+        <ul class="list" id="dueList"></ul>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

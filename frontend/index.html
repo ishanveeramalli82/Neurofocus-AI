@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NeuroFocus AI</title>
+  <meta name="description" content="A webcam-based study-focus tracker with a transparent, testable attention engine.">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/landing.js"></script>
+</head>
+<body>
+<div class="landing">
+  <nav class="landing-nav">
+    <a class="brand" href="/"><span class="brand-mark">◎</span>NeuroFocus AI</a>
+    <div class="row" id="navActions">
+      <a class="btn ghost" href="/login">Sign in</a>
+      <a class="btn primary" href="/register">Create account</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <span class="badge">Science-fair engineering project</span>
+      <h1>See how focused your study time really is.</h1>
+      <p class="lead">NeuroFocus AI uses your webcam and on-device computer vision to estimate when you are looking at your work, then turns it into a transparent Focus Score, session history and a study schedule that adapts to you.</p>
+      <div class="row">
+        <a class="btn primary big" href="/register">Get started</a>
+        <a class="btn big" href="/research">How it is tested</a>
+      </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <svg viewBox="0 0 200 200" width="70%">
+        <circle cx="100" cy="100" r="78" fill="none" stroke="currentColor" stroke-opacity=".12" stroke-width="14"/>
+        <circle cx="100" cy="100" r="78" fill="none" stroke="#16a34a" stroke-width="14" stroke-linecap="round" stroke-dasharray="490" stroke-dashoffset="98" transform="rotate(-90 100 100)"/>
+        <text x="100" y="108" text-anchor="middle" font-size="40" font-weight="700" fill="currentColor">80</text>
+        <text x="100" y="130" text-anchor="middle" font-size="11" fill="currentColor" fill-opacity=".6">example score</text>
+      </svg>
+    </div>
+  </section>
+
+  <section class="grid cols-3">
+    <div class="card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></div>
+      <h3>Private by design</h3><p class="muted small">Face landmarks are computed in your browser. The server receives six numbers per frame (head angles, eye openness, iris position), never images or video.</p></div>
+    <div class="card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+      <h3>Personal calibration</h3><p class="muted small">A 30-second calibration learns where your screen is relative to your camera, so a laptop off to the side does not look like "looking away".</p></div>
+    <div class="card"><div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></div>
+      <h3>Schedule that plans for you</h3><p class="muted small">Add classes, exams and assignments. NeuroFocus finds free time before each deadline and books study blocks, then links each block to the Focus Score you achieved.</p></div>
+  </section>
+
+  <section class="card" id="honest">
+    <h2>What the Focus Score is, and what it is not</h2>
+    <div class="compare">
+      <div>
+        <h3 class="s-FOCUSED">It is</h3>
+        <ul class="small">
+          <li>The percentage of session time your head and eyes were classified as pointing at your screen.</li>
+          <li>Computed by a documented, rule-based algorithm whose accuracy is measured in a reproducible simulation experiment.</li>
+          <li>A study aid that helps you notice patterns (time of day, subject, distraction type).</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="s-LOOKING_AWAY">It is not</h3>
+        <ul class="small">
+          <li>A measure of learning, understanding or effort.</li>
+          <li>A medical device. It does not diagnose or screen for ADHD or any other condition.</li>
+          <li>Validated on real students yet. Current accuracy figures come from simulated "virtual students" (see Research &amp; Method).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+  <p class="tiny center">NeuroFocus AI · student engineering research project</p>
+</div>
+</body>
+</html>

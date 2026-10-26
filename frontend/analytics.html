@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytics · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/analytics.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <h1>Analytics</h1>
+        <p id="note"></p>
+      </div>
+      <div class="tabs" id="rangeTabs" role="tablist">
+        <button data-days="7">7 days</button><button data-days="30" class="active">30 days</button><button data-days="90">90 days</button>
+      </div>
+    </div>
+    <div class="grid cols-4">
+      <div class="card stat"><div class="label">Focus Score</div><div class="value" id="tScore">–</div><div class="sub">time-weighted</div></div>
+      <div class="card stat"><div class="label">Focused time</div><div class="value" id="tFocused">–</div><div class="sub" id="tTotal"></div></div>
+      <div class="card stat"><div class="label">Sessions</div><div class="value" id="tSessions">–</div></div>
+      <div class="card stat"><div class="label">Distractions / hour</div><div class="value" id="tRate">–</div></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card span-2"><div class="card-head"><h2>Daily Focus Score</h2></div><div id="dailyScore"></div></div>
+      <div class="card"><div class="card-head"><h2>Focused minutes per day</h2></div><div id="dailyMin"></div></div>
+      <div class="card"><div class="card-head"><h2>Focus Score by start hour</h2></div><div id="byHour"></div></div>
+      <div class="card"><div class="card-head"><h2>By subject</h2></div><div class="table-wrap"><table><thead><tr><th>Subject</th><th>Sessions</th><th>Hours</th><th>Score</th></tr></thead><tbody id="bySubject"></tbody></table></div></div>
+      <div class="card"><div class="card-head"><h2>Distraction types</h2></div><div id="breakdown"></div></div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research &amp; Method · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/research.js"></script>
+</head>
+<body>
+<div class="shell" id="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <h1>Research &amp; Method</h1>
+        <p>How NeuroFocus AI works, and how its accuracy is measured.</p>
+      </div>
+      <a class="btn hidden" id="publicHome" href="/">← Home</a>
+    </div>
+
+    <div class="prose stack">
+      <div class="card">
+        <h2>Product vs. experiment</h2>
+        <div class="compare">
+          <div>
+            <h3>The product</h3>
+            <p class="small">Accounts, camera calibration, live tracking, Focus Score, history, analytics and the Schedule department. These features are <em>software-tested</em> (automated tests check they behave as specified).</p>
+          </div>
+          <div>
+            <h3>The experiment</h3>
+            <p class="small">Measures one engineering question about the attention engine only: <strong>how accurately does it detect distraction, and does personal calibration improve that accuracy across different camera placements and sensor-noise levels?</strong></p>
+          </div>
+        </div>
+        <div class="disclaimer small">A passing software test shows the code does what it was designed to do. It is <strong>not</strong> evidence that the system measures real students' attention reliably. The current experiment uses simulated "virtual students"; no human participants were involved.</div>
+      </div>
+
+      <div class="card">
+        <h2>Engineering question &amp; variables</h2>
+        <ul class="small">
+          <li><strong>Independent variable 1:</strong> calibration mode (personal calibration vs. population-default thresholds).</li>
+          <li><strong>Independent variable 2:</strong> sensor-noise level (low / medium / high landmark jitter and detection dropouts).</li>
+          <li><strong>Dependent variables:</strong> frame-level F1, precision, recall, specificity and accuracy for "distracted"; 5×5 confusion matrix; episode detection rate; detection latency (s); false alarms per on-task hour; Focus Score absolute error (percentage points).</li>
+          <li><strong>Controls:</strong> identical virtual students, behaviour timelines and random seeds across conditions (paired design); 10 frames/s; 20-minute sessions; fixed engine version and parameters.</li>
+          <li><strong>Pre-specified analysis:</strong> Wilcoxon signed-rank test on paired per-student F1 at each noise level, Holm-corrected, with bootstrap 95% confidence intervals and effect sizes.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>The algorithm</h2>
+        <ol class="small">
+          <li><strong>Features (in the browser).</strong> MediaPipe Face Landmarker gives 478 face landmarks and a head-pose matrix. From these: head yaw and pitch (degrees), eye aspect ratio (EAR), and horizontal/vertical iris offset.</li>
+          <li><strong>Calibration.</strong> Centre look (10 s) sets your neutral pose and open-eye EAR; four corner looks (3 s each) set how far you turn to see your screen; a desk look (4 s) checks the direction of "down".</li>
+          <li><strong>Frame rules</strong> (first match wins): no face → <span class="s-ABSENT">Not detected</span>; EAR &lt; 0.65 × your open-eye EAR → <span class="s-EYES_CLOSED">Eyes closed</span>; pitch below your neutral by more than the down threshold → <span class="s-LOOKING_DOWN">Looking down</span>; |yaw deviation + 30° × iris offset| above the away threshold → <span class="s-LOOKING_AWAY">Looking away</span>; otherwise <span class="s-FOCUSED">Focused</span>.</li>
+          <li><strong>Temporal filter.</strong> A non-focused state is reported only after it lasts its onset time; return to focused needs 0.5 s.</li>
+        </ol>
+        <div class="formula">Focus Score = 100 × (time reported FOCUSED) ÷ (session time)</div>
+        <h3>Current parameters</h3>
+        <div class="table-wrap"><table><tbody id="paramsTable"></tbody></table></div>
+      </div>
+
+      <div class="card">
+        <h2>Experiment results</h2>
+        <div id="results"><p class="muted small">Loading…</p></div>
+      </div>
+
+      <div class="card">
+        <h2>Known limitations</h2>
+        <ul class="small">
+          <li>The virtual-student model is a set of assumptions (behaviour durations, head/eye movement, noise). Results describe performance on that model, not on real people.</li>
+          <li>Head and eye direction show where someone is looking, not whether they are thinking about the work. Looking down to write notes, or reading a phone held near the screen, can be misclassified.</li>
+          <li>The iris-offset scale (±1 ≈ ±30°) and pitch sign are not yet validated against measured ground truth on real cameras.</li>
+          <li>Lighting, glasses, camera quality and skin tone can affect landmark detection; these have not been tested.</li>
+          <li>Any future testing with people requires approval under school and ISEF human-participant rules (IRB/SRC) before data collection.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

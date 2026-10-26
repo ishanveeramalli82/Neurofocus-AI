@@ -1,0 +1,23 @@
+{
+  "experiment_id": "onset_sweep_v1",
+  "description": "Secondary, exploratory experiment. How does the temporal-filter onset time trade detection latency against false alarms? Calibrated engine only, medium noise.",
+  "seed": 20261027,
+  "n_students": 30,
+  "frame_rate_hz": 10,
+  "session_duration_s": 1200,
+  "calibration_protocol_s": {"center": 10, "corner_each": 3, "down": 4},
+  "noise_levels": {
+    "medium": {"pose_sd": 2.5, "ear_sd": 0.020, "gaze_sd": 0.08, "dropout_rate": 0.006, "dropout_mean_s": 0.5, "extreme_yaw_deg": 60, "extreme_yaw_miss_prob": 0.5}
+  },
+  "conditions": [
+    {"name": "onset_0.5s", "use_calibration": true, "engine_overrides": {"onset_s": {"LOOKING_AWAY": 0.5, "LOOKING_DOWN": 0.5, "EYES_CLOSED": 0.5, "ABSENT": 0.5}}},
+    {"name": "onset_1s",   "use_calibration": true, "engine_overrides": {"onset_s": {"LOOKING_AWAY": 1.0, "LOOKING_DOWN": 1.0, "EYES_CLOSED": 1.0, "ABSENT": 1.0}}},
+    {"name": "onset_2s",   "use_calibration": true, "engine_overrides": {"onset_s": {"LOOKING_AWAY": 2.0, "LOOKING_DOWN": 2.0, "EYES_CLOSED": 1.0, "ABSENT": 2.0}}},
+    {"name": "onset_3s",   "use_calibration": true, "engine_overrides": {"onset_s": {"LOOKING_AWAY": 3.0, "LOOKING_DOWN": 3.0, "EYES_CLOSED": 2.0, "ABSENT": 3.0}}}
+  ],
+  "primary_comparison": null,
+  "secondary_metrics": ["f1_distracted", "median_latency_s", "false_alarms_per_hour", "episode_recall"],
+  "evaluation": {"detection_grace_s": 0.5},
+  "alpha": 0.05,
+  "bootstrap_resamples": 10000
+}
