@@ -34,7 +34,7 @@ export function lineChart(el, points, { height = 220, yMax = 100, unit = "" } = 
     const grid = yTicks(yMax).map((v) =>
       `<line class="grid-line" x1="${PAD.l}" x2="${W - PAD.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${PAD.l - 6}" y="${y(v) + 4}" text-anchor="end">${v}${unit}</text>`).join("");
     const every = Math.ceil(points.length / Math.max(2, Math.floor(iw / 60)));
-    const xl = points.map((p, i) => (i % every === 0 || (i === points.length - 1 && i % every >= every / 2))
+    const xl = points.map((p, i) => (i % every === 0 || (i === points.length - 1 && i % every >= every * 0.75))
       ? `<text x="${x(i)}" y="${height - 6}" text-anchor="middle">${esc(p.label)}</text>` : "").join("");
     // break the line where values are missing
     let d = "", area = "", seg = [];
