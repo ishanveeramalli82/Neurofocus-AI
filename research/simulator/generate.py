@@ -25,7 +25,7 @@ TRUTH_FIELDS = ["t", "behavior", "gt_state", "on_task", "episode_id"]
 
 def _write_csv(path, fields, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(rows)
@@ -59,8 +59,8 @@ def generate(config, run_dir):
             fdir = run_dir / "features" / level
             _write_csv(fdir / f"student_{sid:02d}_calibration.csv", FEATURE_FIELDS, cal_obs)
             _write_csv(fdir / f"student_{sid:02d}_session.csv", FEATURE_FIELDS, obs)
-    (run_dir / "ground_truth" / "profiles.json").write_text(json.dumps(profiles, indent=2))
-    (run_dir / "config.json").write_text(json.dumps(config, indent=2))
+    (run_dir / "ground_truth" / "profiles.json").write_text(json.dumps(profiles, indent=2), encoding="utf-8")
+    (run_dir / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
     return profiles
 
 
@@ -69,7 +69,7 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--run-id", required=True)
     args = ap.parse_args()
-    config = json.loads(Path(args.config).read_text())
+    config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     run_dir = ROOT / "data" / "raw" / args.run_id
     if run_dir.exists():
         raise SystemExit(f"{run_dir} already exists; raw data is never overwritten.")

@@ -58,7 +58,7 @@ def main():
     ap.add_argument("--duration", type=float, help="override session_duration_s (smoke test only)")
     args = ap.parse_args()
 
-    cfg_text = Path(args.config).read_text()
+    cfg_text = Path(args.config).read_text(encoding="utf-8")
     config = json.loads(cfg_text)
     smoke = args.students is not None or args.duration is not None
     if args.students:
@@ -104,7 +104,7 @@ def main():
         "platform": platform.platform(),
         "timings_s": timings,
     }
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(f"done. results in {out}")
     print(f"read {out / 'statistics_report.md'} first.")
 

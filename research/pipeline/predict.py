@@ -29,7 +29,7 @@ def engine_params(overrides):
 
 
 def _read_frames(path):
-    with open(path, newline="") as f:
+    with open(path, newline="", encoding="utf-8") as f:
         return [(row["phase"], FeatureFrame.from_dict(row)) for row in csv.DictReader(f)]
 
 
@@ -48,7 +48,7 @@ def run_condition(cal_path, session_path, use_calibration, params):
 
 def predict(run_id):
     raw = ROOT / "data" / "raw" / run_id
-    config = json.loads((raw / "config.json").read_text())
+    config = json.loads((raw / "config.json").read_text(encoding="utf-8"))
     out_root = ROOT / "data" / "processed" / run_id / "predictions"
     for level in config["noise_levels"]:
         fdir = raw / "features" / level
@@ -61,14 +61,14 @@ def predict(run_id):
                 cal, ok, rows = run_condition(fdir / f"{stem}_calibration.csv",
                                               fdir / f"{stem}_session.csv",
                                               cond["use_calibration"], params)
-                with open(odir / f"{stem}.csv", "w", newline="") as f:
+                with open(odir / f"{stem}.csv", "w", newline="", encoding="utf-8") as f:
                     w = csv.writer(f)
                     w.writerow(["t", "raw_state", "state"])
                     w.writerows(rows)
                 (odir / f"{stem}_calibration.json").write_text(json.dumps(
                     {"calibration": cal.to_dict(), "calibration_ok": ok,
                      "focus_score": focus_score([(t, s) for t, _, s in rows]),
-                     "engine_params": params.to_dict()}, indent=2))
+                     "engine_params": params.to_dict()}, indent=2), encoding="utf-8")
     return out_root
 
 

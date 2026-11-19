@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _imports(path):
-    tree = ast.parse(path.read_text())
+    tree = ast.parse(path.read_text(encoding="utf-8"))
     mods = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -40,7 +40,7 @@ def test_simulator_never_imports_engine():
 
 
 def test_predict_stage_never_reads_ground_truth():
-    src = (ROOT / "research" / "pipeline" / "predict.py").read_text()
+    src = (ROOT / "research" / "pipeline" / "predict.py").read_text(encoding="utf-8")
     code = "\n".join(l for l in src.splitlines() if not l.strip().startswith("#"))
     body = code.split('"""', 2)[2]  # skip module docstring, which explains the rule
     assert "ground_truth" not in body

@@ -18,13 +18,18 @@ research project.
 
 ## Quick start
 
-Requires Python 3.10+ and a modern Chromium-based browser, Firefox or Safari.
+Requires Python 3.10+ and Chrome, Edge, Firefox or Safari.
+New to this? Follow [`docs/HOW_TO_RUN.md`](docs/HOW_TO_RUN.md) (VS Code, step by step).
 
 ```bash
+git clone https://github.com/ishanveeramalli82/Neurofocus-AI.git
+cd Neurofocus-AI
 pip install -r requirements.txt
 python run.py
 # open http://127.0.0.1:5000
 ```
+
+In VS Code you can also press **F5** and choose **Run NeuroFocus AI (web app)**.
 
 The camera only works on `localhost` or over HTTPS (a browser rule).
 Everything, including the MediaPipe face model, is served locally, so the
@@ -65,13 +70,36 @@ Full algorithm: [`research/docs/03_algorithm.md`](research/docs/03_algorithm.md)
 ## Project structure
 
 ```
-neurofocus_engine/   attention engine shared by the app and the experiment
-backend/             Flask API: auth, sessions, schedule, analytics, research results
-frontend/            HTML/CSS/JS pages; vendor/ holds MediaPipe + the face model
-research/            experiment: simulator, pipeline, analysis, docs, results
-tests/               automated tests
-run.py               starts the web app
+Neurofocus-AI/
+├── run.py                 starts the web app
+├── requirements.txt       Python packages
+├── neurofocus_engine/     attention engine shared by the app and the experiment
+│   ├── params.py            every threshold and constant, in one place
+│   ├── features.py          the 6-number feature frame (the engine's only input)
+│   ├── calibration.py       personal calibration
+│   ├── classifier.py        frame rules + temporal filter
+│   └── scoring.py           Focus Score and distraction episodes
+├── backend/               Flask API (see docs/ARCHITECTURE.md)
+├── frontend/              HTML pages, css/, js/, vendor/ (MediaPipe + face model)
+├── research/              the science-fair experiment (see research/README.md)
+│   ├── config/              experiment definitions
+│   ├── simulator/           virtual students + ground truth
+│   ├── pipeline/            blind engine run + experiment runner
+│   ├── analysis/            metrics, statistics, figures
+│   ├── docs/                question, procedure, algorithm, limitations, references
+│   ├── data/                raw + processed data (created by runs, not in git)
+│   └── results/             metrics, statistics reports, figures (commit these)
+├── tests/                 automated tests (pytest)
+├── docs/                  HOW_TO_RUN.md, ARCHITECTURE.md
+├── tools/                 build_all_in_one.py (makes a single-file copy of the project)
+└── .vscode/               F5 run configurations
 ```
+
+| Read this | For |
+|---|---|
+| [`docs/HOW_TO_RUN.md`](docs/HOW_TO_RUN.md) | installing and running, troubleshooting |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | how the code fits together, API, database, security |
+| [`research/README.md`](research/README.md) | the experiment and all research documents |
 
 ## Security & privacy
 

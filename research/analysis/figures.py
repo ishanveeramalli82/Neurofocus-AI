@@ -20,7 +20,7 @@ COLORS = ["#2563eb", "#ea580c", "#16a34a", "#9333ea"]
 
 
 def _rows(path):
-    with open(path, newline="") as f:
+    with open(path, newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
 
@@ -56,7 +56,7 @@ def make_figures(run_id):
     res = ROOT / "results" / run_id
     figdir = res / "figures"
     figdir.mkdir(exist_ok=True)
-    cfg = json.loads((ROOT / "data" / "raw" / run_id / "config.json").read_text())
+    cfg = json.loads((ROOT / "data" / "raw" / run_id / "config.json").read_text(encoding="utf-8"))
     levels = list(cfg["noise_levels"])
     conds = [c["name"] for c in cfg["conditions"]]
     rows = _rows(res / "metrics_per_student.csv")

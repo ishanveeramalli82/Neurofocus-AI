@@ -26,7 +26,7 @@ FOCUSED = "FOCUSED"
 
 
 def _read(path):
-    with open(path, newline="") as f:
+    with open(path, newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
 
@@ -162,7 +162,7 @@ def evaluate(run_id):
     pred_root = ROOT / "data" / "processed" / run_id / "predictions"
     out = ROOT / "results" / run_id
     out.mkdir(parents=True, exist_ok=True)
-    config = json.loads((raw / "config.json").read_text())
+    config = json.loads((raw / "config.json").read_text(encoding="utf-8"))
     hz, grace = config["frame_rate_hz"], config["evaluation"]["detection_grace_s"]
     truths = {sid: _read(raw / "ground_truth" / f"student_{sid:02d}.csv")
               for sid in range(1, config["n_students"] + 1)}
@@ -177,7 +177,7 @@ def evaluate(run_id):
             for sid, truth in truths.items():
                 pdir = pred_root / level / name
                 pred = _read(pdir / f"student_{sid:02d}.csv")
-                cal_info = json.loads((pdir / f"student_{sid:02d}_calibration.json").read_text())
+                cal_info = json.loads((pdir / f"student_{sid:02d}_calibration.json").read_text(encoding="utf-8"))
                 cal_failures += int(cond["use_calibration"] and not cal_info["calibration_ok"])
                 m, conf, bconf, eps, fab = evaluate_student(truth, pred, grace, hz)
                 rows.append({"run_id": run_id, "noise": level, "condition": name,
@@ -206,19 +206,19 @@ def evaluate(run_id):
 
     _write_rows(out / "metrics_per_student.csv", rows)
     _write_rows(out / "episodes.csv", ep_rows)
-    (out / "summary.json").write_text(json.dumps(summary, indent=2))
+    (out / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     return out
 
 
 def _write_rows(path, rows):
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
 
 
 def _write_matrix(path, m, row_labels):
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["truth \\ predicted", *STATE_ORDER])
         for r in row_labels:

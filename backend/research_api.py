@@ -27,7 +27,7 @@ def runs():
             man, st = d / "manifest.json", d / "statistics.json"
             if not (man.exists() and st.exists()):
                 continue
-            manifest = json.loads(man.read_text())
+            manifest = json.loads(man.read_text(encoding="utf-8"))
             out.append({
                 "run_id": d.name,
                 "smoke_test": manifest.get("smoke_test", False),
@@ -36,7 +36,7 @@ def runs():
                 "n_students": manifest["effective_config"]["n_students"],
                 "session_duration_s": manifest["effective_config"]["session_duration_s"],
                 "engine_version": manifest.get("engine_version"),
-                "statistics": json.loads(st.read_text()),
+                "statistics": json.loads(st.read_text(encoding="utf-8")),
                 "figures": sorted(p.name for p in (d / "figures").glob("*.png")) if (d / "figures").exists() else [],
             })
     return jsonify(runs=out)

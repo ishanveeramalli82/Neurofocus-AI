@@ -6,3 +6,12 @@ research/data/raw/*
 research/data/processed/*
 !research/data/raw/.gitkeep
 !research/data/processed/.gitkeep
+*.zip
+*.sqlite3
+*.sqlite3-*
+.neurofocus_version
+neurofocus_all_in_one.py
+.venv/
+venv/
+.DS_Store
+Thumbs.db

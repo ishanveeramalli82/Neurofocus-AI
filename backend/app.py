@@ -22,9 +22,9 @@ def _secret_key(instance):
     path = instance / "secret_key"
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(secrets.token_hex(32))
+        path.write_text(secrets.token_hex(32), encoding="utf-8")
         path.chmod(0o600)
-    return path.read_text().strip()
+    return path.read_text(encoding="utf-8").strip()
 
 
 def create_app(test_config=None):

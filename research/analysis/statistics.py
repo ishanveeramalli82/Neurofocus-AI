@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load(run_id):
-    with open(ROOT / "results" / run_id / "metrics_per_student.csv", newline="") as f:
+    with open(ROOT / "results" / run_id / "metrics_per_student.csv", newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     for r in rows:
         for k, v in r.items():
@@ -82,7 +82,7 @@ def holm(pvals):
 
 
 def analyze(run_id):
-    raw_cfg = json.loads((ROOT / "data" / "raw" / run_id / "config.json").read_text())
+    raw_cfg = json.loads((ROOT / "data" / "raw" / run_id / "config.json").read_text(encoding="utf-8"))
     rows = _load(run_id)
     levels = list(raw_cfg["noise_levels"])
     conds = [c["name"] for c in raw_cfg["conditions"]]
@@ -130,8 +130,8 @@ def analyze(run_id):
                                             "p_value": float(st.pvalue), "n": len(complete)}
 
     out = ROOT / "results" / run_id
-    (out / "statistics.json").write_text(json.dumps(result, indent=2))
-    (out / "statistics_report.md").write_text(render_report(result, raw_cfg, levels, conds, metrics))
+    (out / "statistics.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    (out / "statistics_report.md").write_text(render_report(result, raw_cfg, levels, conds, metrics), encoding="utf-8")
     return out
 
 

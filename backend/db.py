@@ -24,7 +24,7 @@ def close_db(_exc=None):
 def init_db(path):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(path)
-    con.executescript(SCHEMA.read_text())
+    con.executescript(SCHEMA.read_text(encoding="utf-8"))
     con.execute("PRAGMA journal_mode = WAL")
     con.close()
 

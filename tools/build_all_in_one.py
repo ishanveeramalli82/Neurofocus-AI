@@ -95,7 +95,7 @@ FOOTER = r'''
 def unpack():
     """Write the project folder. Your database and experiment data are never touched."""
     marker = PROJECT_DIR / ".neurofocus_version"
-    if marker.exists() and marker.read_text().strip() == VERSION:
+    if marker.exists() and marker.read_text(encoding="utf-8").strip() == VERSION:
         return
     print(f"Unpacking project into {PROJECT_DIR} ...")
     for rel, text in FILES.items():
@@ -103,7 +103,7 @@ def unpack():
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
-    marker.write_text(VERSION)
+    marker.write_text(VERSION, encoding="utf-8")
 
 
 def ensure_packages():
