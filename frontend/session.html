@@ -69,6 +69,7 @@
           <div class="video-box" id="videoBox">
             <video id="video" autoplay muted playsinline></video>
             <canvas id="overlay"></canvas>
+            <div class="popped-msg">Camera preview is in the mini window.</div>
             <div class="overlay-msg" id="videoMsg">Starting camera…</div>
           </div>
           <div class="row between small">
@@ -108,7 +109,12 @@
             <button class="btn" id="pauseBtn">Pause</button>
             <button class="btn danger" id="endBtn">End session</button>
           </div>
-          <p class="tiny">Tip: keep this window visible (for example side-by-side with your work) for the most reliable tracking.</p>
+          <div class="popout-box">
+            <button class="btn primary" id="popOutBtn">Pop out mini view</button>
+            <p class="tiny" id="popOutHint">Opens a small floating window that stays on top of your other tabs and apps.
+              Drag it anywhere, like a mini music player. Your camera preview moves into it, which keeps tracking running
+              while you work somewhere else.</p>
+          </div>
         </div>
       </div>
     </section>

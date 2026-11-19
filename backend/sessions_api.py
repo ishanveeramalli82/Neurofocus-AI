@@ -1,10 +1,12 @@
 """Study sessions: calibration, streaming feature frames through the engine,
 history. The browser sends only numeric face features (never video)."""
 
+import csv
+import io
 import json
 import threading
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, Response, jsonify, request, session
 
 from neurofocus_engine import (AttentionEngine, Calibration, DEFAULT_PARAMS, ENGINE_VERSION,
                                FOCUSED, FeatureFrame, LiveScore, calibrate,
@@ -13,6 +15,7 @@ from neurofocus_engine.scoring import MAX_FRAME_GAP_S
 
 from .db import get_db, now_iso, row_dict
 from .security import login_required
+from .session_report import build_report
 from . import validation as v
 
 bp = Blueprint("sessions", __name__, url_prefix="/api/sessions")
@@ -77,6 +80,7 @@ def create():
     title = v.text(d, "title", max_len=120) or "Study session"
     subject = v.text(d, "subject", max_len=60)
     event_id = d.get("schedule_event_id")
+    planned = v.integer(d, "planned_min", lo=5, hi=240)
     db = get_db()
     if event_id is not None:
         ev = db.execute("SELECT id FROM schedule_events WHERE id = ? AND user_id = ?",
@@ -85,9 +89,9 @@ def create():
             return jsonify(error="Schedule block not found."), 404
     cur = db.execute(
         """INSERT INTO study_sessions (user_id, title, subject, schedule_event_id, status, started_at,
-           engine_version, params_json) VALUES (?,?,?,?, 'calibrating', ?, ?, ?)""",
+           engine_version, params_json, planned_min) VALUES (?,?,?,?, 'calibrating', ?, ?, ?, ?)""",
         (session["user_id"], title, subject, event_id, now_iso(), ENGINE_VERSION,
-         json.dumps(DEFAULT_PARAMS.to_dict())))
+         json.dumps(DEFAULT_PARAMS.to_dict()), planned))
     db.commit()
     return jsonify(session=_session_payload(_own_session(cur.lastrowid))), 201
 
@@ -158,6 +162,7 @@ def push_frames(sid):
         row = _own_session(sid)  # re-read counters under the lock
         last_t, focused_s, total_s = row["last_t"], row["focused_s"], row["total_s"]
         distractions = row["distraction_count"]
+        n_frames, n_face = row["frames_total"], row["frames_face"]
         fs = json.loads(row["filter_state_json"] or "null") or {}
         prev_state = fs.get("last_state")
         has_prev = prev_state is not None
@@ -168,6 +173,8 @@ def push_frames(sid):
             if has_prev and fr.t <= last_t:
                 continue  # duplicate or out-of-order frame
             raw_s, state = rt.engine.process(fr)
+            n_frames += 1
+            n_face += int(fr.face_present)
             if has_prev:
                 gap = min(fr.t - last_t, MAX_FRAME_GAP_S)
                 total_s += gap
@@ -193,8 +200,9 @@ def push_frames(sid):
         fs = {"state": f.state, "cand": f._cand, "cand_since": f._cand_since, "last_state": prev_state}
         score = 100 * focused_s / total_s if total_s > 0 else None
         db.execute("""UPDATE study_sessions SET last_t = ?, focused_s = ?, total_s = ?, focus_score = ?,
-                      distraction_count = ?, filter_state_json = ? WHERE id = ?""",
-                   (last_t, focused_s, total_s, score, distractions, json.dumps(fs), sid))
+                      distraction_count = ?, filter_state_json = ?, frames_total = ?, frames_face = ?
+                      WHERE id = ?""",
+                   (last_t, focused_s, total_s, score, distractions, json.dumps(fs), n_frames, n_face, sid))
         db.commit()
         ep = db.execute("SELECT state, start_t FROM session_episodes WHERE session_id = ? AND end_t IS NULL",
                         (sid,)).fetchone()
@@ -258,6 +266,52 @@ def detail(sid):
         b["seconds"] += max(dur, 0)
     return jsonify(session=_session_payload(row), samples=samples, episodes=episodes,
                    distraction_breakdown=by_state)
+
+
+@bp.get("/<int:sid>/report")
+@login_required
+def report(sid):
+    """Detailed end-of-session report (see backend/session_report.py)."""
+    row = _own_session(sid)
+    if not row:
+        return _not_found()
+    db = get_db()
+    samples = [dict(r) for r in db.execute(
+        "SELECT second, state, live_score FROM session_samples WHERE session_id = ? ORDER BY second", (sid,))]
+    episodes = [dict(r) for r in db.execute(
+        "SELECT state, start_t, end_t FROM session_episodes WHERE session_id = ? ORDER BY start_t", (sid,))]
+    others = [dict(r) for r in db.execute(
+        """SELECT id, focus_score, focused_s, total_s, subject, started_at FROM study_sessions
+           WHERE user_id = ? AND status = 'ended' AND id != ?""", (session["user_id"], sid))]
+    event = None
+    if row["schedule_event_id"]:
+        event = row_dict(db.execute("SELECT id, title, kind, start_at, end_at, completed FROM schedule_events "
+                                    "WHERE id = ? AND user_id = ?", (row["schedule_event_id"], session["user_id"])).fetchone())
+    rep = build_report(dict(row), samples, episodes, others, event)
+    rep["session_id"] = sid
+    rep["samples"] = samples
+    resp = jsonify(rep)
+    if request.args.get("download"):
+        resp.headers["Content-Disposition"] = f"attachment; filename=neurofocus-session-{sid}-report.json"
+    return resp
+
+
+@bp.get("/<int:sid>/timeline.csv")
+@login_required
+def timeline_csv(sid):
+    """Per-second attention timeline as a spreadsheet-friendly CSV."""
+    row = _own_session(sid)
+    if not row:
+        return _not_found()
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["second", "clock", "state", "live_focus_score_60s"])
+    for r in get_db().execute(
+            "SELECT second, state, live_score FROM session_samples WHERE session_id = ? ORDER BY second", (sid,)):
+        w.writerow([r["second"], f"{r['second'] // 60}:{r['second'] % 60:02d}", r["state"],
+                    "" if r["live_score"] is None else round(r["live_score"], 2)])
+    return Response(buf.getvalue(), mimetype="text/csv", headers={
+        "Content-Disposition": f"attachment; filename=neurofocus-session-{sid}-timeline.csv"})
 
 
 @bp.patch("/<int:sid>")

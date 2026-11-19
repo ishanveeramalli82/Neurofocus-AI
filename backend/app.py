@@ -12,7 +12,7 @@ from .validation import ValidationError
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND = ROOT / "frontend"
 PAGES = {"", "login", "register", "dashboard", "session", "history", "analytics",
-         "schedule", "research", "settings"}
+         "schedule", "research", "settings", "report"}
 
 
 def _secret_key(instance):

@@ -5,8 +5,10 @@ engine, built as both a working product and a science-fair engineering
 research project.
 
 * **Product:** accounts, camera calibration, on-device computer vision, live
-  Focus Score, session history, analytics, and a Schedule department (calendar,
-  tasks, recurring classes, conflict detection, automatic study-block planning).
+  Focus Score, a pop-out mini window that floats over other tabs and apps,
+  detailed session reports, session history, analytics, and a Schedule
+  department (calendar, tasks, recurring classes, conflict detection,
+  automatic study-block planning).
 * **Research:** a reproducible virtual-student experiment that measures how
   accurately the attention engine detects distraction. See
   [`research/README.md`](research/README.md).

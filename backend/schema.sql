@@ -56,7 +56,10 @@ CREATE TABLE IF NOT EXISTS study_sessions (
     focus_score       REAL,
     distraction_count INTEGER NOT NULL DEFAULT 0,
     filter_state_json TEXT,
-    notes             TEXT NOT NULL DEFAULT ''
+    notes             TEXT NOT NULL DEFAULT '',
+    planned_min       INTEGER,
+    frames_total      INTEGER NOT NULL DEFAULT 0,   -- feature frames received
+    frames_face       INTEGER NOT NULL DEFAULT 0    -- of those, frames with a detected face
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON study_sessions(user_id, started_at);
 

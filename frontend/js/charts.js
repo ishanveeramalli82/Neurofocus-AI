@@ -70,7 +70,7 @@ export function barChart(el, items, { height = 200, yMax, unit = "", alt = false
     const bars = items.map((it, i) => {
       const v = it.value || 0, bx = PAD.l + i * bw + bw * 0.18, w = bw * 0.64;
       const label = i % every === 0 ? `<text x="${PAD.l + i * bw + bw / 2}" y="${height - 6}" text-anchor="middle">${esc(it.label)}</text>` : "";
-      return `<rect class="bar ${alt ? "alt" : ""}" x="${bx}" y="${y(v)}" width="${w}" height="${Math.max(0, y(0) - y(v))}" rx="3"><title>${esc(it.title || `${it.label}: ${Math.round(v)}${unit}`)}</title></rect>${label}`;
+      return `<rect class="bar ${alt ? "alt" : ""} ${it.cls || ""}" x="${bx}" y="${y(v)}" width="${w}" height="${Math.max(0, y(0) - y(v))}" rx="3"><title>${esc(it.title || `${it.label}: ${Math.round(v)}${unit}`)}</title></rect>${label}`;
     }).join("");
     return `<svg class="chart" width="${W}" height="${height}" role="img">${grid}${bars}</svg>`;
   });

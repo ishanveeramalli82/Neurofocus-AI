@@ -49,5 +49,5 @@ $("#recent").innerHTML = recent.sessions.length ? recent.sessions.map((s) => `
   : '<tr><td colspan="4" class="empty">No sessions yet. <a href="/session">Start your first one</a></td></tr>';
 $("#recent").addEventListener("click", (e) => {
   const tr = e.target.closest("tr[data-id]");
-  if (tr) location.href = `/history?id=${tr.dataset.id}`;
+  if (tr) location.href = `/report?id=${tr.dataset.id}`;
 });

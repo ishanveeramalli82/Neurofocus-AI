@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session report · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/report.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <a href="/history" class="small no-print">← All sessions</a>
+        <h1 id="rTitle">Session report</h1>
+        <p id="rMeta"></p>
+      </div>
+      <div class="row no-print">
+        <a class="btn small" id="csvBtn">Download timeline (CSV)</a>
+        <a class="btn small" id="jsonBtn">Download report (JSON)</a>
+        <button class="btn small" id="printBtn">Print / save PDF</button>
+      </div>
+    </div>
+    <div id="loadError" class="alert error hidden" role="alert"></div>
+
+    <div id="report" class="stack hidden">
+      <!-- 1. Overview -->
+      <section class="report-hero">
+        <div class="card center"><div id="rRing"></div><div class="tiny" id="rRank"></div></div>
+        <div class="card">
+          <div class="card-head"><h2>Overview</h2><span class="badge" id="rStatus"></span></div>
+          <div class="kv" id="rOverview"></div>
+        </div>
+      </section>
+
+      <!-- 2. Insights -->
+      <section class="card">
+        <div class="card-head"><h2>What happened in this session</h2></div>
+        <ul class="insights" id="rInsights"></ul>
+      </section>
+
+      <!-- 3. Timeline -->
+      <section class="card">
+        <div class="card-head"><h2>Attention timeline</h2><span class="tiny" id="rTimeLabel"></span></div>
+        <div id="rTimeline"></div>
+        <div class="time-axis" id="rAxis"></div>
+        <div class="legend" id="rLegend"></div>
+        <h3 class="report-sub">Rolling Focus Score (last 60 seconds at each moment)</h3>
+        <div id="rLive"></div>
+      </section>
+
+      <!-- 4. Focus over time + pattern -->
+      <section class="grid cols-2">
+        <div class="card">
+          <div class="card-head"><h2>Focus Score by time block</h2><span class="tiny" id="rSegLabel"></span></div>
+          <div id="rSegments"></div>
+          <p class="small muted" id="rHalves"></p>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Focus pattern</h2></div>
+          <div class="kv" id="rPattern"></div>
+        </div>
+      </section>
+
+      <!-- 5. Time in each state -->
+      <section class="grid cols-2">
+        <div class="card">
+          <div class="card-head"><h2>Time in each state</h2></div>
+          <div id="rStateChart"></div>
+          <div class="table-wrap"><table><thead><tr><th>State</th><th>Time</th><th>Share</th></tr></thead><tbody id="rStateTable"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Distractions by type</h2></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Type</th><th>Count</th><th>Total</th><th>Average</th><th>Longest</th><th>Share</th></tr></thead>
+            <tbody id="rTypeTable"></tbody>
+          </table></div>
+          <h3 class="report-sub">How long distractions lasted</h3>
+          <div id="rLengths"></div>
+        </div>
+      </section>
+
+      <!-- 6. Every distraction -->
+      <section class="card">
+        <div class="card-head"><h2>Every distraction</h2><span class="tiny" id="rEpCount"></span></div>
+        <div class="table-wrap scroll-table"><table>
+          <thead><tr><th>#</th><th>Type</th><th>Started</th><th>Ended</th><th>Length</th></tr></thead>
+          <tbody id="rEpisodes"></tbody>
+        </table></div>
+      </section>
+
+      <!-- 7. Comparison + schedule -->
+      <section class="grid cols-2">
+        <div class="card">
+          <div class="card-head"><h2>Compared with your other sessions</h2></div>
+          <div class="compare-bars" id="rCompare"></div>
+          <div class="kv" id="rCompareKv"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Plan &amp; schedule</h2></div>
+          <div class="kv" id="rPlan"></div>
+          <p class="small muted" id="rEvent"></p>
+        </div>
+      </section>
+
+      <!-- 8. Data quality & method -->
+      <section class="card">
+        <div class="card-head"><h2>Data quality &amp; method</h2></div>
+        <div class="kv" id="rQuality"></div>
+        <h3 class="report-sub">Calibration used for this session</h3>
+        <div class="kv" id="rCal"></div>
+        <div id="rCalWarn"></div>
+        <details class="small">
+          <summary>Engine parameters recorded with this session</summary>
+          <div class="table-wrap"><table><tbody id="rParams"></tbody></table></div>
+        </details>
+        <p class="disclaimer small" id="rDisclaimer"></p>
+      </section>
+
+      <!-- 9. Notes -->
+      <section class="card no-print">
+        <div class="card-head"><h2>Notes</h2></div>
+        <div class="field-row">
+          <div class="field"><label for="nTitle">Title</label><input id="nTitle" maxlength="120"></div>
+          <div class="field"><label for="nSubject">Subject</label><input id="nSubject" maxlength="60"></div>
+        </div>
+        <div class="field"><label for="nNotes">What did you get done?</label><textarea id="nNotes" maxlength="2000"></textarea></div>
+        <div class="row between"><button class="btn primary small" id="saveNotes">Save</button><button class="btn danger small" id="deleteBtn">Delete session</button></div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

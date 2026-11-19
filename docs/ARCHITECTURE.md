@@ -32,7 +32,8 @@ live UI  <---- state + scores --------------   -> SQLite: 1 state/second, episod
 | `security.py` | CSRF check, login rate limiter, `login_required`, security headers / CSP |
 | `validation.py` | input validation helpers |
 | `auth.py` | register, login, logout, profile, password, export, delete account |
-| `sessions_api.py` | study sessions: calibration, frame streaming through the engine, history |
+| `sessions_api.py` | study sessions: calibration, frame streaming through the engine, history, report, CSV |
+| `session_report.py` | builds the detailed end-of-session report (pure function, unit-tested) |
 | `schedule_api.py` | events, recurrence, conflicts, tasks, auto-planning, overview |
 | `analytics_api.py` | daily / hourly / subject summaries, streaks, distraction breakdown |
 | `research_api.py` | read-only engine parameters and experiment results |
@@ -59,6 +60,8 @@ All `/api` responses are JSON. Every POST/PUT/PATCH/DELETE must send the
 | POST | `/api/sessions/<id>/frames` | up to 600 feature frames; returns state and scores |
 | POST | `/api/sessions/<id>/end` | finish; optional `notes`, `complete_event` |
 | GET | `/api/sessions`, `/api/sessions/<id>` | history list / detail with timeline |
+| GET | `/api/sessions/<id>/report` | detailed session report (`?download=1` saves it as JSON) |
+| GET | `/api/sessions/<id>/timeline.csv` | per-second attention timeline as CSV |
 | PATCH, DELETE | `/api/sessions/<id>` | edit title/subject/notes, delete |
 | GET, POST | `/api/schedule/events` | list by `start`/`end`, create (`repeat_weekly`) |
 | PUT, DELETE | `/api/schedule/events/<id>` | edit, delete (`?scope=series`) |
@@ -75,13 +78,15 @@ All `/api` responses are JSON. Every POST/PUT/PATCH/DELETE must send the
 | Table | Contents |
 |---|---|
 | `users` | email, scrypt password hash, display name, settings JSON |
-| `study_sessions` | title, subject, linked schedule event, calibration JSON, engine version and parameters, focused/total seconds, Focus Score |
+| `study_sessions` | title, subject, linked schedule event, planned minutes, calibration JSON, engine version and parameters, focused/total seconds, Focus Score, frames received / with a face |
 | `session_samples` | one engine state and live score per second |
 | `session_episodes` | distraction episodes (state, start, end) |
 | `schedule_events` | title, kind, local start/end, completed, recurrence group |
 | `tasks` | title, subject, due, priority, estimated minutes, done |
 
-No images or video are stored anywhere.
+No images or video are stored anywhere. Columns added after the first
+release are created automatically on startup (`backend/db.py`, `MIGRATIONS`),
+so existing databases keep their data.
 
 ## Security
 

@@ -1,6 +1,7 @@
 import { api } from "./api.js";
 import { VisionTracker, FRAME_HZ } from "./vision.js";
 import { ring, timeline } from "./charts.js";
+import { MiniView, miniViewSupport } from "./miniview.js";
 import { $, esc, mountShell, STATE_LABEL, fmtClock, fmtScore, fmtTime, toast, showError, localDate } from "./ui.js";
 
 const user = await mountShell("session");
@@ -17,6 +18,8 @@ let lastState = null, episodeStart = null, alerted = false;
 let t0 = 0, pausedAt = 0, pausedTotal = 0;
 let sendTimer = null, clockTimer = null;
 let lastFeature = null;
+let mini = null;
+const liveState = { state: null, live: null, session: null, distractions: 0, alert: "" };
 
 // ---------------------------------------------------------- setup form
 const today = localDate();
@@ -61,7 +64,8 @@ $("#setupForm").addEventListener("submit", async (e) => {
     const eventId = $("#eventSel").value ? Number($("#eventSel").value) : null;
     const { session } = await api("/api/sessions", {
       method: "POST",
-      body: { title: $("#title").value, subject: $("#subject").value, schedule_event_id: eventId },
+      body: { title: $("#title").value, subject: $("#subject").value, schedule_event_id: eventId,
+        planned_min: Number($("#planned").value) || null },
     });
     sessionId = session.id;
     linkedEvent = eventId;
@@ -193,6 +197,7 @@ function beginTracking(cal) {
   t0 = performance.now();
   tracker.start(onFrame, t0);
   sendTimer = setInterval(flush, 1000);
+  setupMiniView();
   clockTimer = setInterval(tick, 500);
   window.addEventListener("beforeunload", warnUnload);
 }
@@ -246,6 +251,49 @@ function update(r) {
     alertBox.classList.remove("hidden");
     if (!alerted) { alerted = true; chime(); }
   } else alertBox.classList.add("hidden");
+  Object.assign(liveState, {
+    state: s, live: r.live_score, session: r.session_score, distractions: r.distraction_count,
+    alert: alertBox.classList.contains("hidden") ? "" : alertBox.textContent,
+  });
+  pushMini();
+}
+
+// ---------------------------------------------------------- pop-out mini view
+function elapsedSeconds() {
+  const now = paused ? pausedAt : performance.now();
+  return (now - t0) / 1000 - pausedTotal;
+}
+
+function pushMini() {
+  if (!mini?.isOpen) return;
+  mini.update({ ...liveState, paused, elapsed: elapsedSeconds(), planned: Number($("#planned").value) * 60 });
+}
+
+function setupMiniView() {
+  const btn = $("#popOutBtn");
+  if (!miniViewSupport()) {
+    btn.disabled = true;
+    $("#popOutHint").textContent = "Pop-out needs Chrome or Edge.";
+    return;
+  }
+  mini = new MiniView({
+    video: $("#video"),
+    onPause: () => $("#pauseBtn").click(),
+    onEnd: () => $("#endBtn").click(),
+    onClose: () => {
+      $("#videoBox").classList.remove("popped");
+      btn.textContent = "Pop out mini view";
+    },
+  });
+  btn.addEventListener("click", async () => {
+    if (mini.isOpen) { mini.close(); return; }
+    try {
+      await mini.open();
+      $("#videoBox").classList.add("popped");
+      btn.textContent = "Close mini view";
+      pushMini();
+    } catch (e) { toast(e.message, "error"); }
+  });
 }
 
 function chime() {
@@ -274,6 +322,7 @@ function tick() {
     : `Plan complete. Time for a ${settings.break_min}-minute break.`;
   if (el >= planned && !goalNotified) { goalNotified = true; toast(`You reached your ${planned / 60}-minute goal. Take a ${settings.break_min}-minute break!`); chime(); }
   $("#timeLabel").textContent = `${samples.length}s recorded`;
+  pushMini();
 }
 
 $("#pauseBtn").addEventListener("click", () => {
@@ -284,6 +333,7 @@ $("#pauseBtn").addEventListener("click", () => {
     tracker.start(onFrame, t0);
     $("#pauseBtn").textContent = "Pause";
   }
+  pushMini();
 });
 
 $("#privacyBlur").addEventListener("change", (e) => $("#videoBox").classList.toggle("privacy", e.target.checked));
@@ -295,6 +345,7 @@ $("#endBtn").addEventListener("click", async () => {
   $("#endBtn").disabled = true;
   running = false;
   clearInterval(sendTimer); clearInterval(clockTimer);
+  mini?.close();
   tracker?.stop();
   await flush();
   const { session } = await api(`/api/sessions/${sessionId}/end`, {
@@ -302,5 +353,5 @@ $("#endBtn").addEventListener("click", async () => {
     body: { notes: $("#notes").value, complete_event: linkedEvent && $("#completeEvent").checked },
   });
   window.removeEventListener("beforeunload", warnUnload);
-  location.href = `/history?id=${session.id}`;
+  location.href = `/report?id=${session.id}`;
 });
