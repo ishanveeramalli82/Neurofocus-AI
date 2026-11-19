@@ -219,14 +219,22 @@ function renderSensors(f) {
 }
 
 let flushing = false;
+let lastFlushError = null;
 async function flush() {
   if (flushing || !buffer.length || !sessionId) return;
   flushing = true;
   const batch = buffer.splice(0, 600);
   try {
     const r = await api(`/api/sessions/${sessionId}/frames`, { method: "POST", body: { frames: batch } });
+    lastFlushError = null;
+    $("#connAlert").classList.add("hidden");
     update(r);
   } catch (e) {
+    lastFlushError = e;
+    if (connectionProblem(e)) {
+      $("#connAlert").textContent = SERVER_DOWN;
+      $("#connAlert").classList.remove("hidden");
+    }
     if (e.status >= 500 || !e.status) buffer.unshift(...batch); // network problem: retry later
     if (buffer.length > 3000) buffer.splice(0, buffer.length - 3000);
   } finally { flushing = false; }
@@ -341,17 +349,52 @@ $("#showSensors").addEventListener("change", (e) => $("#sensorBox").classList.to
 
 function warnUnload(e) { e.preventDefault(); e.returnValue = ""; }
 
+const SERVER_DOWN = "Can't reach the NeuroFocus server. Check that the VS Code terminal is still running "
+  + "\"python run.py\" (start it again if it stopped). Nothing is lost: your session is saved so far.";
+
+function connectionProblem(e) {
+  return !e?.status || e.status >= 500;
+}
+
+let ending = false;
 $("#endBtn").addEventListener("click", async () => {
-  $("#endBtn").disabled = true;
-  running = false;
-  clearInterval(sendTimer); clearInterval(clockTimer);
-  mini?.close();
-  tracker?.stop();
-  await flush();
-  const { session } = await api(`/api/sessions/${sessionId}/end`, {
-    method: "POST",
-    body: { notes: $("#notes").value, complete_event: linkedEvent && $("#completeEvent").checked },
-  });
-  window.removeEventListener("beforeunload", warnUnload);
-  location.href = `/report?id=${session.id}`;
+  if (ending) return;
+  ending = true;
+  const btn = $("#endBtn");
+  btn.disabled = true;
+  btn.textContent = "Ending…";
+  // Stop recording first; frames already captured stay in the buffer until sent.
+  if (running) {
+    running = false;
+    clearInterval(sendTimer); clearInterval(clockTimer);
+    mini?.close();
+    tracker?.stop();
+  }
+  try {
+    while (flushing) await new Promise((res) => setTimeout(res, 100));  // let an in-flight send finish
+    while (buffer.length) {
+      const before = buffer.length;
+      await flush();
+      if (buffer.length >= before) throw lastFlushError || new Error("Could not send the last frames.");
+    }
+    const { session } = await api(`/api/sessions/${sessionId}/end`, {
+      method: "POST",
+      body: { notes: $("#notes").value, complete_event: linkedEvent && $("#completeEvent").checked },
+    });
+    window.removeEventListener("beforeunload", warnUnload);
+    location.href = `/report?id=${session.id}`;
+  } catch (e) {
+    console.error(e);
+    showEndError(connectionProblem(e) ? SERVER_DOWN : `Could not end the session: ${e.message}`);
+    btn.disabled = false;
+    btn.textContent = "Try ending again";
+    ending = false;
+  }
 });
+
+function showEndError(msg) {
+  const box = $("#connAlert");
+  box.textContent = msg;
+  box.classList.remove("hidden");
+  toast(msg, "error");
+}
