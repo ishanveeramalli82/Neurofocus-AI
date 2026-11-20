@@ -56,9 +56,8 @@ async function checkServerVersion() {
     const bar = document.createElement("div");
     bar.className = "alert warn update-banner";
     bar.setAttribute("role", "alert");
-    bar.innerHTML = `<strong>NeuroFocus was updated, but the app server is still the old version.</strong>
-      Some pages (like session reports) will not open until you restart it: in the VS Code terminal press
-      <strong>Ctrl+C</strong>, run <code>python run.py</code>, then reload this page.`;
+    bar.innerHTML = `<strong>Update almost done.</strong> Restart NeuroFocus to finish installing the new version,
+      then reload this page.`;
     document.querySelector(".main")?.prepend(bar);
   } catch { /* server unreachable: pages show their own errors */ }
 }

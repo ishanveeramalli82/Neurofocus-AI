@@ -355,8 +355,8 @@ $("#showSensors").addEventListener("change", (e) => $("#sensorBox").classList.to
 
 function warnUnload(e) { e.preventDefault(); e.returnValue = ""; }
 
-const SERVER_DOWN = "Can't reach the NeuroFocus server. Check that the VS Code terminal is still running "
-  + "\"python run.py\" (start it again if it stopped). Nothing is lost: your session is saved so far.";
+const SERVER_DOWN = "Connection lost. Your session is saved so far. Make sure NeuroFocus is still running, "
+  + "then try again.";
 
 function connectionProblem(e) {
   return !e?.status || e.status >= 500;

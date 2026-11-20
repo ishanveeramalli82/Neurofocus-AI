@@ -52,3 +52,11 @@ Before the official experiment, complete the checklist in
 | Camera does not start | Use `http://127.0.0.1:5000`, allow camera access in the browser, and close other apps using the camera (Zoom, Teams). |
 | `Address already in use` | The app is already running in another terminal. Stop it with `Ctrl+C`. |
 | "Calibration needs another try" | Sit facing the screen with your face well lit, and keep still during the centre phase. |
+
+## Messages you might see in the app
+
+| Message | Meaning and fix |
+|---|---|
+| "Update almost done. Restart NeuroFocus…" | You ran `git pull` but the old server is still running. Stop it (Ctrl+C, or the trash-can icon on every VS Code terminal), run `python run.py`, reload. |
+| "Connection lost. Your session is saved so far…" | The server stopped during a session. Start it again with `python run.py`, then click **Try ending again**. |
+| "Can't connect to NeuroFocus right now" | The server isn't running. Start it with `python run.py`. |

@@ -17,7 +17,7 @@ try {
 } catch (e) {
   $("#loadError").textContent = e.status === 404
     ? "This session was not found. It may have been deleted, or it belongs to another account."
-    : !e.status ? "Can't reach the NeuroFocus server. Check that \"python run.py\" is running in VS Code, then reload."
+    : !e.status ? "Can't connect to NeuroFocus right now. Check that it's running, then reload this page."
     : `Could not load this session: ${e.message}`;
   $("#loadError").classList.remove("hidden");
   throw e;
