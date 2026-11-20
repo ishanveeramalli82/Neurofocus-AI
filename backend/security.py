@@ -94,4 +94,8 @@ def apply_security_headers(resp):
     resp.headers.setdefault("X-Frame-Options", "DENY")
     if request.path.startswith("/api/"):
         resp.headers["Cache-Control"] = "no-store"
+    elif not request.path.startswith("/static/vendor/"):
+        # Pages, CSS and JS: always check for a newer copy (cheap, uses ETags),
+        # so a `git pull` never leaves the browser running a mix of old and new files.
+        resp.headers["Cache-Control"] = "no-cache"
     return resp

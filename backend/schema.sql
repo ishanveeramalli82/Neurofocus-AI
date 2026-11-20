@@ -59,7 +59,9 @@ CREATE TABLE IF NOT EXISTS study_sessions (
     notes             TEXT NOT NULL DEFAULT '',
     planned_min       INTEGER,
     frames_total      INTEGER NOT NULL DEFAULT 0,   -- feature frames received
-    frames_face       INTEGER NOT NULL DEFAULT 0    -- of those, frames with a detected face
+    frames_face       INTEGER NOT NULL DEFAULT 0,   -- of those, frames with a detected face
+    if_then_plan      TEXT NOT NULL DEFAULT '',     -- optional "if I get distracted, then I will..."
+    reflection_json   TEXT                          -- end-of-session reflection answers
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON study_sessions(user_id, started_at);
 
@@ -80,3 +82,33 @@ CREATE TABLE IF NOT EXISTS session_episodes (
     end_t       REAL
 );
 CREATE INDEX IF NOT EXISTS idx_episodes_session ON session_episodes(session_id);
+
+-- Onboarding survey answers (product data for personalization only).
+CREATE TABLE IF NOT EXISTS study_profiles (
+    user_id       INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    answers_json  TEXT NOT NULL DEFAULT '{}',
+    completed_at  TEXT,
+    skipped       INTEGER NOT NULL DEFAULT 0,
+    updated_at    TEXT NOT NULL
+);
+
+-- Personal study plans: what the student entered and what the planner produced.
+CREATE TABLE IF NOT EXISTS study_plans (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at    TEXT NOT NULL,
+    inputs_json   TEXT NOT NULL,
+    plan_json     TEXT NOT NULL,
+    applied_at    TEXT,
+    group_id      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_plans_user ON study_plans(user_id, created_at);
+
+-- Self check-ins during a session ("Was I on task just now?").
+CREATE TABLE IF NOT EXISTS session_checkins (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id  INTEGER NOT NULL REFERENCES study_sessions(id) ON DELETE CASCADE,
+    t           REAL NOT NULL,
+    rating      TEXT NOT NULL               -- on | mostly | off
+);
+CREATE INDEX IF NOT EXISTS idx_checkins_session ON session_checkins(session_id);

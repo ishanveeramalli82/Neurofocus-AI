@@ -81,6 +81,7 @@ def create():
     subject = v.text(d, "subject", max_len=60)
     event_id = d.get("schedule_event_id")
     planned = v.integer(d, "planned_min", lo=5, hi=240)
+    if_then = v.text(d, "if_then_plan", max_len=300)
     db = get_db()
     if event_id is not None:
         ev = db.execute("SELECT id FROM schedule_events WHERE id = ? AND user_id = ?",
@@ -89,9 +90,9 @@ def create():
             return jsonify(error="Schedule block not found."), 404
     cur = db.execute(
         """INSERT INTO study_sessions (user_id, title, subject, schedule_event_id, status, started_at,
-           engine_version, params_json, planned_min) VALUES (?,?,?,?, 'calibrating', ?, ?, ?, ?)""",
+           engine_version, params_json, planned_min, if_then_plan) VALUES (?,?,?,?, 'calibrating', ?, ?, ?, ?, ?)""",
         (session["user_id"], title, subject, event_id, now_iso(), ENGINE_VERSION,
-         json.dumps(DEFAULT_PARAMS.to_dict()), planned))
+         json.dumps(DEFAULT_PARAMS.to_dict()), planned, if_then))
     db.commit()
     return jsonify(session=_session_payload(_own_session(cur.lastrowid))), 201
 
@@ -219,7 +220,10 @@ def end(sid):
         return _not_found()
     d = request.get_json(silent=True) or {}
     notes = v.text(d, "notes", max_len=2000, default=row["notes"])
+    reflection = _parse_reflection(d.get("reflection")) if d.get("reflection") else None
     db = get_db()
+    if reflection is not None:
+        db.execute("UPDATE study_sessions SET reflection_json = ? WHERE id = ?", (json.dumps(reflection), sid))
     db.execute("UPDATE session_episodes SET end_t = ? WHERE session_id = ? AND end_t IS NULL",
                (row["last_t"], sid))
     score = 100 * row["focused_s"] / row["total_s"] if row["total_s"] > 0 else None
@@ -232,6 +236,44 @@ def end(sid):
     with _runtime_lock:
         _runtime.pop(sid, None)
     return jsonify(session=_session_payload(_own_session(sid)))
+
+
+PULLED_AWAY = ("phone", "other_apps", "people", "tired", "thoughts", "hungry", "noise", "nothing")
+CHECKIN_RATINGS = ("on", "mostly", "off")
+
+
+def _parse_reflection(r):
+    """End-of-session reflection: how focused you felt (1-5), what pulled you
+    away, what helped. Self-ratings are shown next to the camera estimate."""
+    if not isinstance(r, dict):
+        raise v.ValidationError("reflection must be an object")
+    pulled = r.get("pulled_away") or []
+    if not isinstance(pulled, list) or not all(p in PULLED_AWAY for p in pulled):
+        raise v.ValidationError("pulled_away has an unknown option")
+    return {"felt_focus": v.integer(r, "felt_focus", lo=1, hi=5),
+            "pulled_away": sorted(set(pulled)),
+            "helped": v.text(r, "helped", max_len=500)}
+
+
+@bp.post("/<int:sid>/checkins")
+@login_required
+def add_checkin(sid):
+    """A quick self check-in: 'Was I on task just now?' (on / mostly / off)."""
+    row = _own_session(sid)
+    if not row:
+        return _not_found()
+    d = request.get_json(silent=True) or {}
+    rating = v.choice(d, "rating", CHECKIN_RATINGS, None)
+    try:
+        t = float(d.get("t"))
+    except (TypeError, ValueError):
+        raise v.ValidationError("t must be the session time in seconds")
+    if not 0 <= t < 24 * 3600:
+        raise v.ValidationError("t out of range")
+    db = get_db()
+    db.execute("INSERT INTO session_checkins (session_id, t, rating) VALUES (?,?,?)", (sid, t, rating))
+    db.commit()
+    return jsonify(ok=True), 201
 
 
 @bp.get("")
@@ -287,7 +329,9 @@ def report(sid):
     if row["schedule_event_id"]:
         event = row_dict(db.execute("SELECT id, title, kind, start_at, end_at, completed FROM schedule_events "
                                     "WHERE id = ? AND user_id = ?", (row["schedule_event_id"], session["user_id"])).fetchone())
-    rep = build_report(dict(row), samples, episodes, others, event)
+    checkins = [dict(r) for r in db.execute(
+        "SELECT t, rating FROM session_checkins WHERE session_id = ? ORDER BY t", (sid,))]
+    rep = build_report(dict(row), samples, episodes, others, event, checkins)
     rep["session_id"] = sid
     rep["samples"] = samples
     resp = jsonify(rep)

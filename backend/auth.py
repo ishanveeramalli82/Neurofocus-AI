@@ -12,11 +12,22 @@ bp = Blueprint("auth", __name__, url_prefix="/api")
 DEFAULT_SETTINGS = {
     "daily_goal_min": 120,
     "alert_after_s": 20,
-    "alert_sound": True,
+    "alert_sound": False,          # quiet by default (W3C COGA: limit interruptions)
     "default_session_min": 50,
-    "break_min": 10,
+    "break_min": 5,
     "show_camera_preview": True,
+    # Focus support options (turned on from the onboarding survey or Settings)
+    "nudges": True,                # gentle "ready to get back to it?" message
+    "block_timer": False,          # study/break cycles with a break countdown
+    "block_min": 25,               # study block length for the block timer
+    "calm_mode": False,            # hide everything except task, timer and controls
+    "big_timer": False,            # large visual countdown ring
+    "checkins": False,             # periodic "was I on task?" self check-ins
+    "checkin_every_min": 10,
+    "if_then_prompt": False,       # ask for an if-then plan at session start
 }
+FLAG_SETTINGS = ("alert_sound", "show_camera_preview", "nudges", "block_timer", "calm_mode",
+                 "big_timer", "checkins", "if_then_prompt")
 # A real hash of a random string so failed logins for unknown emails take as
 # long as for known ones (prevents account enumeration by timing).
 _DUMMY_HASH = generate_password_hash("not-a-real-password-0f9a")
@@ -24,8 +35,11 @@ _DUMMY_HASH = generate_password_hash("not-a-real-password-0f9a")
 
 def _user_payload(row):
     settings = {**DEFAULT_SETTINGS, **json.loads(row["settings_json"] or "{}")}
+    prof = get_db().execute("SELECT completed_at, skipped FROM study_profiles WHERE user_id = ?",
+                            (row["id"],)).fetchone()
     return {"id": row["id"], "email": row["email"], "display_name": row["display_name"],
-            "settings": settings, "created_at": row["created_at"]}
+            "settings": settings, "created_at": row["created_at"],
+            "onboarding": {"done": bool(prof and prof["completed_at"]), "skipped": bool(prof and prof["skipped"])}}
 
 
 def current_user():
@@ -116,7 +130,10 @@ def update_profile():
         settings["alert_after_s"] = v.integer(s, "alert_after_s", lo=5, hi=600, default=settings["alert_after_s"])
         settings["default_session_min"] = v.integer(s, "default_session_min", lo=5, hi=240, default=settings["default_session_min"])
         settings["break_min"] = v.integer(s, "break_min", lo=1, hi=60, default=settings["break_min"])
-        for flag in ("alert_sound", "show_camera_preview"):
+        settings["block_min"] = v.integer(s, "block_min", lo=10, hi=60, default=settings["block_min"])
+        settings["checkin_every_min"] = v.integer(s, "checkin_every_min", lo=3, hi=60,
+                                                  default=settings["checkin_every_min"])
+        for flag in FLAG_SETTINGS:
             if flag in s:
                 settings[flag] = bool(s[flag])
     name = v.text(d, "display_name", max_len=60, default=row["display_name"]) or row["display_name"]
@@ -155,7 +172,9 @@ def export_data():
         s["episodes"] = rows("SELECT state, start_t, end_t FROM session_episodes WHERE session_id = ? ORDER BY start_t", s["id"])
     data = {"exported_at": now_iso(), "user": user, "study_sessions": sessions,
             "schedule_events": rows("SELECT * FROM schedule_events WHERE user_id = ?", uid),
-            "tasks": rows("SELECT * FROM tasks WHERE user_id = ?", uid)}
+            "tasks": rows("SELECT * FROM tasks WHERE user_id = ?", uid),
+            "study_profile": rows("SELECT answers_json, completed_at, updated_at FROM study_profiles WHERE user_id = ?", uid),
+            "study_plans": rows("SELECT id, created_at, inputs_json, plan_json FROM study_plans WHERE user_id = ?", uid)}
     resp = jsonify(data)
     resp.headers["Content-Disposition"] = "attachment; filename=neurofocus-export.json"
     return resp

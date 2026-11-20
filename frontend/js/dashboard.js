@@ -20,7 +20,28 @@ $("#goalMeter").firstElementChild.style.width = `${Math.min(100, (100 * t.focuse
 $("#goalLabel").textContent = `goal ${t.goal_min} min`;
 $("#weekScore").textContent = fmtScore(week.totals.focus_score);
 $("#weekScore").className = `value ${scoreClass(week.totals.focus_score)}`;
-$("#streak").textContent = week.streak_days;
+$("#streak").textContent = `${week.active_days_last7} of 7`;
+
+// Next steps: survey, then unlocking the personal plan.
+const plan = await api(`/api/plan/status?tz_offset_min=${tzOffsetMin()}`);
+const steps = [];
+if (!user.onboarding.done) {
+  steps.push(`<div class="card next-card"><h3>Tell NeuroFocus how you study</h3>
+    <p class="small muted">A 2-minute survey so your breaks, block lengths and study times fit you.</p>
+    <a class="btn primary small" href="/onboarding">Take the survey</a></div>`);
+}
+if (!plan.unlocked) {
+  steps.push(`<div class="card next-card"><h3>Your personal plan: ${plan.sessions_done} of ${plan.sessions_needed} sessions</h3>
+    <div class="meter"><div data-w="${(100 * plan.sessions_done) / plan.sessions_needed}"></div></div>
+    <p class="small muted">Record ${plan.sessions_needed - plan.sessions_done} more session${plan.sessions_needed - plan.sessions_done === 1 ? "" : "s"} (2+ minutes each) to unlock a study plan built around how you focus.</p>
+    <a class="btn small" href="/session">Start a session</a></div>`);
+} else if (!plan.latest_plan) {
+  steps.push(`<div class="card next-card"><h3>Your personal plan is ready to build</h3>
+    <p class="small muted">Pick the days and times you can study and what you'll learn.</p>
+    <a class="btn primary small" href="/plan">Build my plan</a></div>`);
+}
+$("#nextSteps").innerHTML = steps.join("");
+$("#nextSteps").querySelectorAll("[data-w]").forEach((d) => { d.style.width = `${d.dataset.w}%`; });
 $("#weekPlan").textContent = `${Math.round(overview.week.completed_study_min / 60 * 10) / 10}h`;
 $("#weekPlanSub").textContent = `done of ${Math.round(overview.week.planned_study_min / 60 * 10) / 10}h planned`;
 

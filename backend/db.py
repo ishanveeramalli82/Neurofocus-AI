@@ -28,6 +28,8 @@ MIGRATIONS = {
         ("planned_min", "INTEGER"),
         ("frames_total", "INTEGER NOT NULL DEFAULT 0"),
         ("frames_face", "INTEGER NOT NULL DEFAULT 0"),
+        ("if_then_plan", "TEXT NOT NULL DEFAULT ''"),
+        ("reflection_json", "TEXT"),
     ],
 }
 

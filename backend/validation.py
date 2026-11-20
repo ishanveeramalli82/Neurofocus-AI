@@ -75,3 +75,16 @@ def password(d, key="password"):
     if v.isalpha() or v.isdigit():
         raise ValidationError("Password must mix letters with numbers or symbols")
     return v
+
+
+def date(d, key, *, label=None, required=False):
+    """Accepts 'YYYY-MM-DD'. Returns the same string, or None if optional and empty."""
+    v = d.get(key)
+    if not v:
+        if required:
+            raise ValidationError(f"{label or key} is required")
+        return None
+    try:
+        return dt.date.fromisoformat(str(v)).isoformat()
+    except ValueError:
+        raise ValidationError(f"{label or key} must be a date")

@@ -9,6 +9,11 @@ $("#sessionLen").value = s.default_session_min;
 $("#breakLen").value = s.break_min;
 $("#alertAfter").value = s.alert_after_s;
 $("#sound").checked = s.alert_sound;
+const FLAGS = { nudges: "nudges", blockTimer: "block_timer", calmMode: "calm_mode", bigTimer: "big_timer",
+  checkins: "checkins", ifThenPrompt: "if_then_prompt" };
+for (const [id, key] of Object.entries(FLAGS)) $(`#${id}`).checked = !!s[key];
+$("#blockMin").value = s.block_min;
+$("#checkinEvery").value = s.checkin_every_min;
 try { $("#theme").value = localStorage.getItem("nf-theme") || ""; } catch { /* storage blocked */ }
 
 $("#profileForm").addEventListener("submit", async (e) => {
@@ -17,7 +22,9 @@ $("#profileForm").addEventListener("submit", async (e) => {
     await api("/api/account/profile", { method: "PUT", body: {
       display_name: $("#name").value,
       settings: { daily_goal_min: $("#goal").value, default_session_min: $("#sessionLen").value,
-        break_min: $("#breakLen").value, alert_after_s: $("#alertAfter").value, alert_sound: $("#sound").checked },
+        break_min: $("#breakLen").value, alert_after_s: $("#alertAfter").value, alert_sound: $("#sound").checked,
+        block_min: $("#blockMin").value, checkin_every_min: $("#checkinEvery").value,
+        ...Object.fromEntries(Object.entries(FLAGS).map(([id, key]) => [key, $(`#${id}`).checked])) },
     } });
     try { localStorage.setItem("nf-theme", $("#theme").value); } catch { /* ignore */ }
     applyTheme();

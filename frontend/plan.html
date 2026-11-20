@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Plan · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/plan.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <button class="btn ghost small menu-btn" id="menuBtn" aria-label="Menu"></button>
+        <h1>My personal study plan</h1>
+        <p>You choose when you can study and what you'll learn. NeuroFocus fits block lengths, breaks and reviews
+          to how you actually focus.</p>
+      </div>
+    </div>
+
+    <!-- Locked until 3 sessions -->
+    <section id="locked" class="card hidden">
+      <h2>Unlock your plan</h2>
+      <p>Your plan uses your own focus data, so it needs <strong id="needN">3</strong> recorded study sessions
+        (each at least 2 minutes). You have <strong id="haveN">0</strong>.</p>
+      <div class="meter"><div id="lockMeter"></div></div>
+      <ul class="small muted">
+        <li>Each session teaches NeuroFocus how long you usually stay focused and when you focus best.</li>
+        <li id="surveyHint" class="hidden">Also take the 2-minute <a href="/onboarding">"How do you study?" survey</a>
+          so your plan starts from your preferences.</li>
+      </ul>
+      <a class="btn primary" href="/session">Start a session</a>
+    </section>
+
+    <section id="builder" class="stack hidden">
+      <div class="card">
+        <div class="card-head"><h2>1. When can you study?</h2>
+          <div class="row">
+            <button class="btn small" type="button" data-preset="weekdays">Weekdays after school</button>
+            <button class="btn small" type="button" data-preset="weekend">Add weekends</button>
+          </div>
+        </div>
+        <p class="small muted">Add each day and time window you're free. NeuroFocus never books more than about
+          three-quarters of it, so you keep catch-up time, and it skips anything already on your schedule.</p>
+        <div id="availRows" class="stack"></div>
+        <button class="btn small" type="button" id="addAvail">+ Add a day and time</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>2. What will you learn?</h2></div>
+        <p class="small muted">One row per topic. If there's a test or due date, add it and the plan finishes new
+          material early and schedules spaced self-test reviews before it.</p>
+        <div id="topicRows" class="stack"></div>
+        <button class="btn small" type="button" id="addTopic">+ Add a topic</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>3. Plan length</h2></div>
+        <div class="field-row">
+          <div class="field"><label for="startDate">Start on</label><input type="date" id="startDate"></div>
+          <div class="field"><label for="weeks">How many weeks</label>
+            <select id="weeks"><option value="1">1 week</option><option value="2" selected>2 weeks</option>
+              <option value="3">3 weeks</option><option value="4">4 weeks</option></select></div>
+        </div>
+        <div id="buildError" class="alert error hidden" role="alert"></div>
+        <div class="row">
+          <button class="btn primary big" id="previewBtn" type="button">Build my plan</button>
+          <span class="tiny">Nothing is added to your schedule until you confirm.</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="stack hidden">
+      <div class="card">
+        <div class="card-head"><h2 id="resultTitle">Your plan</h2><span class="badge" id="confBadge"></span></div>
+        <div class="kv" id="resultKv"></div>
+        <div id="warnings"></div>
+        <div class="row no-print" id="applyRow">
+          <button class="btn primary" id="applyBtn" type="button">Add to my schedule</button>
+          <button class="btn" id="editBtn" type="button">Change my answers</button>
+          <span class="tiny" id="applyHint">Replaces upcoming blocks from your previous plan (finished blocks are kept).</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Why this plan?</h2></div>
+        <ol class="insights" id="whyList"></ol>
+        <details class="small">
+          <summary>How your sessions were used</summary>
+          <div class="kv" id="personalKv"></div>
+          <div class="table-wrap"><table><thead><tr><th>Time of day</th><th>Sessions</th><th>Average score</th><th>Adjusted (shrunk toward your overall average)</th></tr></thead>
+            <tbody id="bandRows"></tbody></table></div>
+          <p class="tiny">This is rule-based personalization with statistical shrinkage, not a trained AI model:
+            a few sessions are far too little data to train one. Full method: docs/PERSONALIZATION.md.</p>
+        </details>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Day by day</h2><span class="tiny" id="blockCount"></span></div>
+        <div id="days"></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

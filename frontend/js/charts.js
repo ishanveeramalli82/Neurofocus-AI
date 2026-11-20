@@ -107,3 +107,16 @@ export function ring(el, value, sub = "Focus Score") {
     <text x="85" y="90" text-anchor="middle" font-size="38">${value == null ? "–" : Math.round(v)}</text>
     <text class="ring-sub" x="85" y="114" text-anchor="middle">${esc(sub)}</text></svg>`;
 }
+
+/** Big countdown ring: shows time remaining as a shrinking arc ("externalized time"). */
+export function timeRing(el, remainingSec, totalSec, sub = "left") {
+  const r = 80, c = 2 * Math.PI * r;
+  const f = totalSec > 0 ? Math.max(0, Math.min(1, remainingSec / totalSec)) : 0;
+  const m = Math.floor(Math.max(0, remainingSec) / 60), s = Math.floor(Math.max(0, remainingSec) % 60);
+  el.innerHTML = `<svg class="ring time-ring" viewBox="0 0 190 190" role="img" aria-label="${m} minutes ${s} seconds ${esc(sub)}">
+    <circle class="track" cx="95" cy="95" r="${r}" fill="none" stroke-width="12"/>
+    <circle class="val" cx="95" cy="95" r="${r}" fill="none" stroke-width="12" stroke-linecap="round"
+      stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - f)}" transform="rotate(-90 95 95)"/>
+    <text x="95" y="102" text-anchor="middle" font-size="40">${m}:${String(s).padStart(2, "0")}</text>
+    <text class="ring-sub" x="95" y="128" text-anchor="middle">${esc(sub)}</text></svg>`;
+}

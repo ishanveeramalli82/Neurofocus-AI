@@ -25,6 +25,11 @@
       </div>
     </div>
     <div id="loadError" class="alert error hidden" role="alert"></div>
+    <div id="unfinished" class="alert warn hidden" role="status">
+      <strong>This session was never ended.</strong> The app probably stopped (or the tab was closed) before
+      <em>End session</em> was clicked. Everything recorded up to that point is saved and shown below.
+      <div class="row"><button class="btn small primary" id="finishBtn">Finish this session</button></div>
+    </div>
 
     <div id="report" class="stack hidden">
       <!-- 1. Overview -->
@@ -40,6 +45,16 @@
       <section class="card">
         <div class="card-head"><h2>What happened in this session</h2></div>
         <ul class="insights" id="rInsights"></ul>
+      </section>
+
+      <!-- Self-monitoring: your view next to the camera's -->
+      <section class="card" id="selfCard">
+        <div class="card-head"><h2>Your view vs the camera</h2></div>
+        <div class="kv" id="rSelf"></div>
+        <div class="table-wrap"><table><thead><tr><th>Check-in at</th><th>You said</th><th>Camera (previous minute)</th><th>Match</th></tr></thead>
+          <tbody id="rCheckins"></tbody></table></div>
+        <p class="tiny">The camera only sees where your head and eyes point. Your own rating can be more accurate
+          (paper notes, thinking) or less (staring without reading). Comparing both is the point.</p>
       </section>
 
       <!-- 3. Timeline -->

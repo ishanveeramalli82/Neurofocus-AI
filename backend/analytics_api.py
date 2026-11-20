@@ -84,6 +84,8 @@ def summary():
               "sessions": len(v_)} for k, v_ in by_subject.items()], key=lambda x: -x["hours"]),
         distraction_breakdown=breakdown,
         streak_days=streak,
+        # Forgiving consistency measure: a missed day does not reset it to zero.
+        active_days_last7=sum(1 for i in range(7) if (today.date() - dt.timedelta(days=i)) in active_days),
         today={"focused_min": today_d["focused_s"] / 60, "goal_min": goal},
         note="Focus Score measures camera-visible attention behaviour (where your head and eyes point). "
              "It does not measure learning, comprehension, or any medical condition.",

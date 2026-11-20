@@ -15,11 +15,24 @@ let r;
 try {
   r = await api(`/api/sessions/${encodeURIComponent(id)}/report`);
 } catch (e) {
-  $("#loadError").textContent = e.message;
+  $("#loadError").textContent = e.status === 404
+    ? "This session was not found. It may have been deleted, or it belongs to another account."
+    : !e.status ? "Can't reach the NeuroFocus server. Check that \"python run.py\" is running in VS Code, then reload."
+    : `Could not load this session: ${e.message}`;
   $("#loadError").classList.remove("hidden");
   throw e;
 }
 $("#report").classList.remove("hidden");
+if (r.overview.status !== "ended") {
+  $("#unfinished").classList.remove("hidden");
+  $("#finishBtn").addEventListener("click", async () => {
+    $("#finishBtn").disabled = true;
+    try {
+      await api(`/api/sessions/${r.session_id}/end`, { method: "POST", body: {} });
+      location.reload();
+    } catch (e) { toast(e.message, "error"); $("#finishBtn").disabled = false; }
+  });
+}
 $("#csvBtn").href = `/api/sessions/${r.session_id}/timeline.csv`;
 $("#jsonBtn").href = `/api/sessions/${r.session_id}/report?download=1`;
 $("#printBtn").addEventListener("click", () => window.print());
@@ -174,3 +187,18 @@ $("#deleteBtn").addEventListener("click", async () => {
   await api(`/api/sessions/${r.session_id}`, { method: "DELETE" });
   location.href = "/history";
 });
+
+// ---------------------------------------------------------------- self-monitoring
+const sm = r.self_monitoring;
+const SAID = { on: "Yes", mostly: "Mostly", off: "No" };
+$("#rSelf").innerHTML = [
+  kv("Your if-then plan", sm.if_then_plan ? esc(sm.if_then_plan) : "none"),
+  kv("How focused you felt", sm.felt_focus_pct != null ? `${fmt(sm.felt_focus_pct)} / 100` : "not rated"),
+  kv("Camera Focus Score", fmt(ov.focus_score)),
+  kv("Check-ins matching the camera", sm.checkin_agreement_pct != null ? `${fmt(sm.checkin_agreement_pct)}%` : "–"),
+  kv("What pulled you away", sm.reflection?.pulled_away?.length ? esc(sm.reflection.pulled_away.join(", ").replace(/_/g, " ")) : "–"),
+  kv("What helped", sm.reflection?.helped ? esc(sm.reflection.helped) : "–"),
+].join("");
+$("#rCheckins").innerHTML = sm.checkins.length ? sm.checkins.map((c) => `<tr><td>${fmtClock(c.t)}</td><td>${SAID[c.rating]}</td>
+  <td>${c.camera_focus_pct != null ? fmt(c.camera_focus_pct) + "% focused" : "no data"}</td><td>${c.agrees == null ? "–" : c.agrees ? "yes" : "no"}</td></tr>`).join("")
+  : '<tr><td colspan="4" class="empty">No check-ins this session. Turn them on in Settings → Focus support options.</td></tr>';

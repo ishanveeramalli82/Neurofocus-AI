@@ -25,6 +25,19 @@
           <div class="field"><label for="alertAfter">Nudge me after distracted for (s)</label><input id="alertAfter" type="number" min="5" max="600"></div>
         </div>
         <div class="field"><label class="check"><input type="checkbox" id="sound"> Play a soft chime with nudges</label></div>
+        <h3 class="report-sub">Focus support options</h3>
+        <p class="tiny">Tools that make studying easier for anyone, especially if focus is hard for you.
+          <a href="/onboarding">Retake the "How do you study?" survey</a></p>
+        <div class="field"><label class="check"><input type="checkbox" id="nudges"> Gentle nudges when I drift</label></div>
+        <div class="field"><label class="check"><input type="checkbox" id="blockTimer"> Study blocks with a break timer</label></div>
+        <div class="field-row">
+          <div class="field"><label for="blockMin">Study block (min)</label><input id="blockMin" type="number" min="10" max="60"></div>
+          <div class="field"><label for="checkinEvery">Check-in every (min)</label><input id="checkinEvery" type="number" min="3" max="60"></div>
+        </div>
+        <div class="field"><label class="check"><input type="checkbox" id="calmMode"> Start sessions in calm focus mode</label></div>
+        <div class="field"><label class="check"><input type="checkbox" id="bigTimer"> Big visual countdown</label></div>
+        <div class="field"><label class="check"><input type="checkbox" id="checkins"> Quick self check-ins ("Was I on task?")</label></div>
+        <div class="field"><label class="check"><input type="checkbox" id="ifThenPrompt"> Highlight the if-then plan when starting a session</label></div>
         <div class="field"><label for="theme">Theme</label><select id="theme"><option value="">Match system</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
         <button class="btn primary" type="submit">Save</button>
       </form>

@@ -21,6 +21,7 @@ export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const ICONS = {
   dashboard: '<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',
   session: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/>',
+  plan: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
   schedule: '<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/>',
   history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
   analytics: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
@@ -37,12 +38,33 @@ export function icon(name) {
 const NAV = [
   ["dashboard", "Dashboard", "/dashboard"],
   ["session", "Focus Session", "/session"],
+  ["plan", "My Plan", "/plan"],
   ["schedule", "Schedule", "/schedule"],
   ["history", "History", "/history"],
   ["analytics", "Analytics", "/analytics"],
 ];
 
+// Must match APP_VERSION in backend/version.py.
+export const APP_VERSION = "1.2.0";
+
+/** Warn when the pages are newer than the running server (e.g. after `git pull`
+ * without restarting `python run.py`), which otherwise causes "Not found" errors. */
+async function checkServerVersion() {
+  try {
+    const h = await (await fetch("/api/health", { cache: "no-store" })).json();
+    if (h.version === APP_VERSION) return;
+    const bar = document.createElement("div");
+    bar.className = "alert warn update-banner";
+    bar.setAttribute("role", "alert");
+    bar.innerHTML = `<strong>NeuroFocus was updated, but the app server is still the old version.</strong>
+      Some pages (like session reports) will not open until you restart it: in the VS Code terminal press
+      <strong>Ctrl+C</strong>, run <code>python run.py</code>, then reload this page.`;
+    document.querySelector(".main")?.prepend(bar);
+  } catch { /* server unreachable: pages show their own errors */ }
+}
+
 export async function mountShell(active) {
+  checkServerVersion();
   const user = await requireUser();
   const side = $("#sidebar");
   const link = ([key, label, href]) =>
@@ -127,9 +149,11 @@ export function fmtDateTime(iso) {
 export function fmtTime(localIso) {
   return new Date(localIso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
+// Green for strong scores; low scores stay neutral instead of a "fail" red/orange,
+// so feedback informs without shaming (see docs/research).
 export function scoreClass(x) {
   if (x == null) return "";
-  return x >= 75 ? "s-FOCUSED" : x >= 50 ? "s-LOOKING_DOWN" : "s-LOOKING_AWAY";
+  return x >= 75 ? "s-FOCUSED" : "";
 }
 // Local wall-clock ISO 'YYYY-MM-DDTHH:MM' (what the schedule API stores).
 export function localIso(d = new Date()) {

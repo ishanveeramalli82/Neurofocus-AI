@@ -34,6 +34,10 @@ live UI  <---- state + scores --------------   -> SQLite: 1 state/second, episod
 | `auth.py` | register, login, logout, profile, password, export, delete account |
 | `sessions_api.py` | study sessions: calibration, frame streaming through the engine, history, report, CSV |
 | `session_report.py` | builds the detailed end-of-session report (pure function, unit-tested) |
+| `survey.py` | onboarding survey questions, validation, focus-support settings |
+| `planner.py` | personal study planner (pure functions, property-tested) |
+| `plan_api.py` | survey and plan endpoints (`/api/profile`, `/api/plan/*`) |
+| `version.py` | app version; the browser warns when the server is outdated |
 | `schedule_api.py` | events, recurrence, conflicts, tasks, auto-planning, overview |
 | `analytics_api.py` | daily / hourly / subject summaries, streaks, distraction breakdown |
 | `research_api.py` | read-only engine parameters and experiment results |

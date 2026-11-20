@@ -3,16 +3,17 @@ import os
 import secrets
 from pathlib import Path
 
-from flask import Flask, abort, jsonify, send_from_directory
+from flask import Flask, abort, jsonify, request, send_from_directory
 
 from .db import close_db, init_db
 from .security import apply_security_headers, check_csrf
 from .validation import ValidationError
+from .version import APP_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND = ROOT / "frontend"
 PAGES = {"", "login", "register", "dashboard", "session", "history", "analytics",
-         "schedule", "research", "settings", "report"}
+         "schedule", "research", "settings", "report", "onboarding", "plan"}
 
 
 def _secret_key(instance):
@@ -46,8 +47,8 @@ def create_app(test_config=None):
         app.config["SECRET_KEY"] = _secret_key(instance)
     init_db(app.config["DATABASE"])
 
-    from . import auth, sessions_api, schedule_api, analytics_api, research_api
-    for mod in (auth, sessions_api, schedule_api, analytics_api, research_api):
+    from . import auth, sessions_api, schedule_api, analytics_api, research_api, plan_api
+    for mod in (auth, sessions_api, schedule_api, analytics_api, research_api, plan_api):
         app.register_blueprint(mod.bp)
 
     app.before_request(check_csrf)
@@ -60,7 +61,10 @@ def create_app(test_config=None):
 
     @app.errorhandler(404)
     def _nf(e):
-        return jsonify(error="Not found."), 404
+        if request.path.startswith(("/api/", "/static/", "/research-files/")):
+            return jsonify(error="Not found."), 404
+        # A page request: show a readable page instead of raw JSON.
+        return send_from_directory(FRONTEND, "404.html"), 404
 
     @app.errorhandler(413)
     def _big(e):
@@ -68,7 +72,7 @@ def create_app(test_config=None):
 
     @app.get("/api/health")
     def health():
-        return jsonify(ok=True)
+        return jsonify(ok=True, version=APP_VERSION)
 
     @app.get("/")
     @app.get("/<page>")

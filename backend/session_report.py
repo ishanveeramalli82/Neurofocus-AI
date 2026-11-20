@@ -69,7 +69,37 @@ def _minutes(sec):
     return f"{sec / 60:.1f} min" if sec >= 60 else f"{sec:.0f} s"
 
 
-def build_report(sess, samples, episodes, others, event=None):
+CHECKIN_SCORE = {"on": 100.0, "mostly": 60.0, "off": 0.0}
+CHECKIN_WINDOW_S = 60
+
+
+def self_monitoring(sess, samples, checkins):
+    """Compare the student's own judgements with the camera estimate.
+    Keeping the student as the judge of their own attention (and checking
+    accuracy) is the self-monitoring approach with the strongest evidence
+    (Briesch & Briesch 2016); the camera works as a mirror, not a judge."""
+    reflection = json.loads(sess.get("reflection_json") or "null")
+    rows = []
+    for c in checkins:
+        win = [s for s in samples if c["t"] - CHECKIN_WINDOW_S <= s["second"] <= c["t"]]
+        cam = _pct(sum(s["state"] == FOCUSED for s in win), len(win))
+        rows.append({"t": c["t"], "rating": c["rating"], "camera_focus_pct": cam,
+                     "agrees": None if cam is None else
+                     (c["rating"] == "on" and cam >= 70) or (c["rating"] == "off" and cam < 40)
+                     or (c["rating"] == "mostly" and 30 <= cam <= 90)})
+    judged = [r for r in rows if r["agrees"] is not None]
+    felt = reflection.get("felt_focus") if reflection else None
+    return {
+        "if_then_plan": sess.get("if_then_plan") or "",
+        "reflection": reflection,
+        "felt_focus_pct": (felt - 1) * 25 if felt else None,   # 1..5 -> 0..100
+        "checkins": rows,
+        "checkin_agreement_pct": _pct(sum(r["agrees"] for r in judged), len(judged)),
+        "self_checkin_score": statistics.fmean(CHECKIN_SCORE[r["rating"]] for r in rows) if rows else None,
+    }
+
+
+def build_report(sess, samples, episodes, others, event=None, checkins=()):
     """sess: study_sessions row as dict; samples: [{second, state, live_score}];
     episodes: [{state, start_t, end_t}]; others: the user's other ended sessions
     (dicts with id, focus_score, focused_s, total_s, subject, started_at);
@@ -194,6 +224,7 @@ def build_report(sess, samples, episodes, others, event=None):
 
     report = {"overview": overview, "state_time": state_time, "focus_pattern": focus_pattern,
               "distractions": distractions, "comparison": comparison, "data_quality": data_quality,
+              "self_monitoring": self_monitoring(sess, samples, checkins),
               "disclaimer": DISCLAIMER}
     report["insights"] = _insights(report)
     return report
@@ -246,6 +277,21 @@ def _insights(r):
     if ov["plan_completion_pct"] is not None:
         out.append(f"You tracked {ov['tracked_s'] / 60:.0f} of your planned {ov['planned_min']} minutes "
                    f"({ov['plan_completion_pct']:.0f}%).")
+    sm = r["self_monitoring"]
+    if sm["felt_focus_pct"] is not None and ov["focus_score"] is not None:
+        gap = sm["felt_focus_pct"] - ov["focus_score"]
+        if abs(gap) >= 20:
+            out.append(f"You rated your focus {'higher' if gap > 0 else 'lower'} than the camera estimate "
+                       f"({sm['felt_focus_pct']:.0f} vs {ov['focus_score']:.0f}). Either can be right: the camera "
+                       "cannot see paper notes or thinking, and it can be fooled by staring at the screen.")
+        else:
+            out.append("Your own focus rating was close to the camera estimate.")
+    if sm["checkin_agreement_pct"] is not None:
+        out.append(f"Your quick check-ins agreed with the camera {sm['checkin_agreement_pct']:.0f}% of the time "
+                   f"({len(sm['checkins'])} check-in{'s' if len(sm['checkins']) != 1 else ''}).")
+    if sm["reflection"] and sm["reflection"]["pulled_away"] and "nothing" not in sm["reflection"]["pulled_away"]:
+        out.append("You said you were pulled away by: " +
+                   ", ".join(p.replace("_", " ") for p in sm["reflection"]["pulled_away"]) + ".")
     if not dq["calibrated"]:
         out.append("This session ran without personal calibration, so results may be less accurate "
                    "if your camera is off to the side.")

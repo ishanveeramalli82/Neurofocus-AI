@@ -5,7 +5,9 @@ engine, built as both a working product and a science-fair engineering
 research project.
 
 * **Product:** accounts, camera calibration, on-device computer vision, live
-  Focus Score, a pop-out mini window that floats over other tabs and apps,
+  Focus Score, a "How do you study?" survey, a personal study plan that
+  unlocks after 3 sessions, ADHD-friendly focus supports (calm mode, visual
+  timer, break timer, self check-ins, if-then plans), a pop-out mini window that floats over other tabs and apps,
   detailed session reports, session history, analytics, and a Schedule
   department (calendar, tasks, recurring classes, conflict detection,
   automatic study-block planning).
@@ -102,6 +104,8 @@ Neurofocus-AI/
 | [`docs/HOW_TO_RUN.md`](docs/HOW_TO_RUN.md) | installing and running, troubleshooting |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | how the code fits together, API, database, security |
 | [`research/README.md`](research/README.md) | the experiment and all research documents |
+| [`docs/PERSONALIZATION.md`](docs/PERSONALIZATION.md) | survey, personal plan and focus supports: how they work and why |
+| [`docs/research/`](docs/research/) | literature review behind the ADHD-friendly design (verify citations before use) |
 
 ## Security & privacy
 

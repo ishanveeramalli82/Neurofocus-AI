@@ -1,12 +1,13 @@
 import { api } from "./api.js";
 import { VisionTracker, FRAME_HZ } from "./vision.js";
-import { ring, timeline } from "./charts.js";
+import { ring, timeline, timeRing } from "./charts.js";
 import { MiniView, miniViewSupport } from "./miniview.js";
 import { $, esc, mountShell, STATE_LABEL, fmtClock, fmtScore, fmtTime, toast, showError, localDate } from "./ui.js";
 
 const user = await mountShell("session");
 const settings = user.settings;
 $("#planned").value = settings.default_session_min;
+if (settings.if_then_prompt) $("#ifThenField").classList.add("highlight");
 
 let tracker = null;
 let sessionId = null;
@@ -65,7 +66,7 @@ $("#setupForm").addEventListener("submit", async (e) => {
     const { session } = await api("/api/sessions", {
       method: "POST",
       body: { title: $("#title").value, subject: $("#subject").value, schedule_event_id: eventId,
-        planned_min: Number($("#planned").value) || null },
+        planned_min: Number($("#planned").value) || null, if_then_plan: $("#ifThen").value },
     });
     sessionId = session.id;
     linkedEvent = eventId;
@@ -198,6 +199,7 @@ function beginTracking(cal) {
   tracker.start(onFrame, t0);
   sendTimer = setInterval(flush, 1000);
   setupMiniView();
+  setupSupports();
   clockTimer = setInterval(tick, 500);
   window.addEventListener("beforeunload", warnUnload);
 }
@@ -254,11 +256,12 @@ function update(r) {
   if (s !== lastState) { episodeStart = r.t; alerted = false; lastState = s; }
   const away = s !== "FOCUSED" ? r.t - (r.current_episode?.start_t ?? episodeStart) : 0;
   const alertBox = $("#liveAlert");
-  if (s !== "FOCUSED" && away >= settings.alert_after_s) {
+  if (s !== "FOCUSED" && away >= settings.alert_after_s && settings.nudges && !nudgesMuted && !onBreak) {
     alertBox.textContent = `${STATE_LABEL[s]} for ${Math.round(away)} s. Ready to get back to it?`;
     alertBox.classList.remove("hidden");
     if (!alerted) { alerted = true; chime(); }
   } else alertBox.classList.add("hidden");
+  $("#calmState").innerHTML = `<span class="dot s-${s}"></span> ${STATE_LABEL[s]}`;
   Object.assign(liveState, {
     state: s, live: r.live_score, session: r.session_score, distractions: r.distraction_count,
     alert: alertBox.classList.contains("hidden") ? "" : alertBox.textContent,
@@ -330,19 +333,22 @@ function tick() {
     : `Plan complete. Time for a ${settings.break_min}-minute break.`;
   if (el >= planned && !goalNotified) { goalNotified = true; toast(`You reached your ${planned / 60}-minute goal. Take a ${settings.break_min}-minute break!`); chime(); }
   $("#timeLabel").textContent = `${samples.length}s recorded`;
+  supportsTick(el, planned);
   pushMini();
 }
 
-$("#pauseBtn").addEventListener("click", () => {
-  paused = !paused;
-  if (paused) { pausedAt = performance.now(); tracker.pause(); $("#pauseBtn").textContent = "Resume"; }
+function setPaused(p) {
+  if (p === paused || !running) return;
+  paused = p;
+  if (paused) { pausedAt = performance.now(); tracker.pause(); }
   else {
     pausedTotal += (performance.now() - pausedAt) / 1000;
     tracker.start(onFrame, t0);
-    $("#pauseBtn").textContent = "Pause";
   }
+  $("#pauseBtn").textContent = $("#calmPause").textContent = paused ? "Resume" : "Pause";
   pushMini();
-});
+}
+$("#pauseBtn").addEventListener("click", () => setPaused(!paused));
 
 $("#privacyBlur").addEventListener("change", (e) => $("#videoBox").classList.toggle("privacy", e.target.checked));
 $("#showSensors").addEventListener("change", (e) => $("#sensorBox").classList.toggle("hidden", !e.target.checked));
@@ -357,6 +363,7 @@ function connectionProblem(e) {
 }
 
 let ending = false;
+let reflection = null;
 $("#endBtn").addEventListener("click", async () => {
   if (ending) return;
   ending = true;
@@ -369,6 +376,8 @@ $("#endBtn").addEventListener("click", async () => {
     clearInterval(sendTimer); clearInterval(clockTimer);
     mini?.close();
     tracker?.stop();
+    hideSupportsUi();
+    reflection = await askReflection();
   }
   try {
     while (flushing) await new Promise((res) => setTimeout(res, 100));  // let an in-flight send finish
@@ -379,7 +388,8 @@ $("#endBtn").addEventListener("click", async () => {
     }
     const { session } = await api(`/api/sessions/${sessionId}/end`, {
       method: "POST",
-      body: { notes: $("#notes").value, complete_event: linkedEvent && $("#completeEvent").checked },
+      body: { notes: $("#notes").value, complete_event: linkedEvent && $("#completeEvent").checked,
+        ...(reflection ? { reflection } : {}) },
     });
     window.removeEventListener("beforeunload", warnUnload);
     location.href = `/report?id=${session.id}`;
@@ -397,4 +407,151 @@ function showEndError(msg) {
   box.textContent = msg;
   box.classList.remove("hidden");
   toast(msg, "error");
+}
+
+// ======================================================================
+// Focus supports (switched on from the onboarding survey or Settings).
+// Design basis: docs/research/ADHD friendly study app design.md
+// ======================================================================
+let nudgesMuted = false;
+let calm = false;
+let onBreak = false, breakEndsAt = 0, breakTimer = null;
+let blockNo = 1, blockStartEl = 0;
+let nextCheckinEl = Infinity, checkinHideTimer = null;
+
+function setupSupports() {
+  $("#liveTools").classList.remove("hidden");
+  $("#calmTask").textContent = $("#title").value || "Study session";
+  const ifThen = $("#ifThen").value.trim();
+  for (const id of ["#calmIfThen", "#ifThenLive"]) {
+    $(id).textContent = ifThen ? `Your plan: ${ifThen}` : "";
+    $(id).classList.toggle("hidden", !ifThen);
+  }
+  $("#bigTimer").classList.toggle("hidden", !(settings.big_timer || settings.block_timer));
+  if (settings.block_timer) {
+    $("#blockChip").classList.remove("hidden");
+  }
+  if (settings.checkins) nextCheckinEl = settings.checkin_every_min * 60;
+  if (!settings.nudges) { $("#muteBtn").disabled = true; $("#muteBtn").textContent = "Nudges off (Settings)"; }
+  if (settings.calm_mode) setCalm(true);
+}
+
+function setCalm(on) {
+  calm = on;
+  document.body.classList.toggle("calm", on);
+  $("#calmView").classList.toggle("hidden", !on);
+  $("#calmBtn").setAttribute("aria-pressed", String(on));
+  $("#calmBtn").textContent = on ? "Exit calm mode" : "Calm focus mode";
+}
+$("#calmBtn").addEventListener("click", () => setCalm(!calm));
+$("#calmExit").addEventListener("click", () => setCalm(false));
+$("#calmPause").addEventListener("click", () => setPaused(!paused));
+$("#calmEnd").addEventListener("click", () => $("#endBtn").click());
+$("#muteBtn").addEventListener("click", () => {
+  nudgesMuted = !nudgesMuted;
+  $("#muteBtn").setAttribute("aria-pressed", String(nudgesMuted));
+  $("#muteBtn").textContent = nudgesMuted ? "Unmute nudges" : "Mute nudges";
+  if (nudgesMuted) $("#liveAlert").classList.add("hidden");
+});
+
+function supportsTick(el, planned) {
+  // Visual countdown: the current block if the block timer is on, otherwise the planned session.
+  const blockLen = settings.block_min * 60;
+  const remaining = settings.block_timer ? blockLen - (el - blockStartEl) : planned - el;
+  const total = settings.block_timer ? blockLen : planned;
+  const label = settings.block_timer ? `left in block ${blockNo}` : "left in your plan";
+  if (!$("#bigTimer").classList.contains("hidden")) timeRing($("#bigTimer"), remaining, total, label);
+  if (calm) timeRing($("#calmRing"), remaining, total, label);
+  $("#calmSub").textContent = settings.block_timer
+    ? `Block ${blockNo} · ${settings.block_min}-minute blocks with ${settings.break_min}-minute breaks`
+    : `${fmtClock(el)} studied of your ${planned / 60}-minute plan`;
+  if (settings.block_timer) $("#blockChip").textContent = `Block ${blockNo} · ${fmtClock(Math.max(0, remaining))} left`;
+  if (settings.block_timer && !paused && !onBreak && remaining <= 0) startBreak();
+  if (!paused && el >= nextCheckinEl) { showCheckin(el); nextCheckinEl = el + settings.checkin_every_min * 60; }
+}
+
+function startBreak() {
+  onBreak = true;
+  setPaused(true);
+  chime();
+  breakEndsAt = performance.now() + settings.break_min * 60000;
+  $("#breakTitle").textContent = `Block ${blockNo} done. Break time!`;
+  $("#breakText").textContent = "Stand up, stretch, get some water. Tracking is paused during your break.";
+  $("#breakNext").textContent = "Start next block";
+  $("#breakCard").classList.remove("hidden");
+  const tickBreak = () => {
+    const left = (breakEndsAt - performance.now()) / 1000;
+    timeRing($("#breakRing"), left, settings.break_min * 60, "break left");
+    if (left <= 0) {
+      clearInterval(breakTimer);
+      $("#breakTitle").textContent = "Ready to start again?";
+      $("#breakText").textContent = `Block ${blockNo + 1} is next. Click when you're back at your desk.`;
+      chime();
+    }
+  };
+  tickBreak();
+  breakTimer = setInterval(tickBreak, 500);
+}
+function endBreak() {
+  clearInterval(breakTimer);
+  $("#breakCard").classList.add("hidden");
+  onBreak = false;
+  blockNo++;
+  setPaused(false);
+  const now = performance.now();
+  blockStartEl = (now - t0) / 1000 - pausedTotal;
+}
+$("#breakNext").addEventListener("click", endBreak);
+$("#breakSkip").addEventListener("click", endBreak);
+
+function showCheckin(el) {
+  const card = $("#checkinCard");
+  card.dataset.t = String(Math.round(el * 10) / 10);
+  card.classList.remove("hidden");
+  clearTimeout(checkinHideTimer);
+  checkinHideTimer = setTimeout(() => card.classList.add("hidden"), 45000);   // never blocks work
+}
+$("#checkinCard").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-rating]");
+  if (!b) return;
+  $("#checkinCard").classList.add("hidden");
+  if (!b.dataset.rating) return;
+  try {
+    await api(`/api/sessions/${sessionId}/checkins`, { method: "POST",
+      body: { t: Number($("#checkinCard").dataset.t), rating: b.dataset.rating } });
+  } catch { /* a missed check-in is not worth interrupting the student */ }
+});
+
+function hideSupportsUi() {
+  clearInterval(breakTimer);
+  $("#breakCard").classList.add("hidden");
+  $("#checkinCard").classList.add("hidden");
+  setCalm(false);
+}
+
+const PULLED = [["phone", "Phone"], ["other_apps", "Other apps or websites"], ["people", "People around me"],
+  ["tired", "Feeling tired"], ["thoughts", "My own thoughts"], ["hungry", "Hungry or thirsty"],
+  ["noise", "Noise"], ["nothing", "Nothing really"]];
+$("#feltGroup").innerHTML = ["Not at all", "A little", "Somewhat", "Mostly", "Very"].map((l, i) =>
+  `<label class="chip-opt"><input type="radio" name="felt" value="${i + 1}"><span>${l}</span></label>`).join("");
+$("#pulledGroup").innerHTML = PULLED.map(([v, l]) =>
+  `<label class="chip-opt"><input type="checkbox" name="pulled" value="${v}"><span>${l}</span></label>`).join("");
+
+function askReflection() {
+  return new Promise((resolve) => {
+    const d = $("#reflectDialog");
+    const done = (val) => { d.close(); resolve(val); };
+    $("#reflectSkip").onclick = () => done(null);
+    d.oncancel = (e) => { e.preventDefault(); done(null); };
+    $("#reflectForm").onsubmit = (e) => {
+      e.preventDefault();
+      const felt = document.querySelector('[name="felt"]:checked');
+      done({
+        felt_focus: felt ? Number(felt.value) : null,
+        pulled_away: [...document.querySelectorAll('[name="pulled"]:checked')].map((i) => i.value),
+        helped: $("#helped").value,
+      });
+    };
+    d.showModal();
+  });
 }

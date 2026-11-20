@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How do you study? · NeuroFocus AI</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="module" src="/static/js/onboarding.js"></script>
+</head>
+<body>
+<div class="onb-wrap">
+  <a class="brand" href="/dashboard"><span class="brand-mark">◎</span>NeuroFocus AI</a>
+  <div class="card onb-card">
+    <div class="row between">
+      <span class="tiny" id="stepLabel"></span>
+      <button class="btn ghost small" id="skipBtn">Skip for now</button>
+    </div>
+    <div class="meter onb-progress"><div id="progressBar"></div></div>
+    <div id="intro">
+      <h1>How do you study?</h1>
+      <p class="muted">A few quick questions (about 2 minutes) so NeuroFocus can suggest the right block length,
+        breaks and study times for you. Every question is optional.</p>
+      <ul class="small muted">
+        <li>Your answers stay in your account and are only used to personalize the app.</li>
+        <li>There are no right or wrong answers, and nothing here is a test or a diagnosis.</li>
+        <li>You can change your answers any time in Settings.</li>
+      </ul>
+      <button class="btn primary big" id="beginBtn">Start</button>
+    </div>
+    <form id="surveyForm" class="hidden" novalidate>
+      <h2 id="sectionTitle"></h2>
+      <div id="questions"></div>
+      <div id="formError" class="alert error hidden" role="alert"></div>
+      <div class="row between onb-nav">
+        <button type="button" class="btn" id="backBtn">Back</button>
+        <button type="submit" class="btn primary" id="nextBtn">Next</button>
+      </div>
+    </form>
+    <div id="done" class="hidden">
+      <h1>All set!</h1>
+      <p class="muted" id="doneText"></p>
+      <ul class="small" id="doneList"></ul>
+      <div class="alert info small">After you record <strong>3 study sessions</strong>, NeuroFocus can build your
+        <strong>personal study plan</strong>: you choose the days, times and what you'll learn, and it fits the
+        blocks, breaks and reviews to how you actually focus.</div>
+      <div class="row">
+        <a class="btn primary big" href="/session">Start my first session</a>
+        <a class="btn" href="/dashboard">Go to dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

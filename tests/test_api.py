@@ -136,3 +136,15 @@ def test_frames_validation(user):
     assert user.post(f"/api/sessions/{sid}/frames", {"frames": [{"face_present": True}]}).status_code == 400
     assert user.post(f"/api/sessions/{sid}/frames", {"frames": "nope"}).status_code == 400
     assert user.post(f"/api/sessions/{sid}/frames", {"frames": [{"t": 0}] * 601}).status_code == 400
+
+
+def test_version_404_page_and_cache_headers(api):
+    from backend.version import APP_VERSION
+    assert api.get("/api/health").get_json()["version"] == APP_VERSION
+    r = api.get("/no-such-page")
+    assert r.status_code == 404 and b"Page not found" in r.data and r.mimetype == "text/html"
+    assert api.get("/api/nope").get_json() == {"error": "Not found."}
+    assert api.get("/static/js/ui.js").headers["Cache-Control"] == "no-cache"
+    assert api.get("/report").headers["Cache-Control"] == "no-cache"
+    js = api.get("/static/js/ui.js").get_data(as_text=True)
+    assert f'APP_VERSION = "{APP_VERSION}"' in js  # frontend and backend versions agree

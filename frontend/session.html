@@ -44,6 +44,11 @@
             <label for="eventSel">Linked schedule block (optional)</label>
             <select id="eventSel"><option value="">None</option></select>
           </div>
+          <div class="field" id="ifThenField">
+            <label for="ifThen">Your if-then plan <span class="tiny">(optional)</span></label>
+            <input id="ifThen" maxlength="300" placeholder="If I pick up my phone, then I'll put it face-down and reread the last line.">
+            <div class="tiny">Deciding in advance what you'll do when distracted makes it easier to get back on track.</div>
+          </div>
           <div class="field">
             <label class="check"><input type="checkbox" id="doCal" checked> Calibrate first (recommended, about 30 seconds)</label>
           </div>
@@ -63,6 +68,26 @@
     </section>
 
     <!-- Step 2/3: camera + live -->
+    <div id="liveTools" class="row live-tools hidden">
+      <button class="btn small" id="calmBtn" aria-pressed="false">Calm focus mode</button>
+      <button class="btn small" id="muteBtn" aria-pressed="false">Mute nudges</button>
+      <span class="badge hidden" id="blockChip"></span>
+    </div>
+
+    <!-- Calm focus mode: only the task, a big timer and the controls -->
+    <section id="calmView" class="calm-view hidden" aria-live="polite">
+      <div class="calm-task" id="calmTask"></div>
+      <div id="calmRing"></div>
+      <div class="calm-sub" id="calmSub"></div>
+      <div class="calm-state" id="calmState"></div>
+      <p class="calm-ifthen hidden" id="calmIfThen"></p>
+      <div class="row centered">
+        <button class="btn" id="calmPause">Pause</button>
+        <button class="btn danger" id="calmEnd">End session</button>
+        <button class="btn ghost" id="calmExit">Show full view</button>
+      </div>
+    </section>
+
     <section id="live" class="session-grid hidden">
       <div class="stack">
         <div class="card">
@@ -89,6 +114,8 @@
         <div class="card center">
           <div id="statePill" class="state-pill"><span class="dot"></span><span>Waiting…</span></div>
           <div id="ringLive"></div>
+          <div id="bigTimer" class="hidden"></div>
+          <p class="small ifthen-live hidden" id="ifThenLive"></p>
           <div class="grid cols-3">
             <div class="stat"><div class="label">Elapsed</div><div class="value" id="elapsed">0:00</div></div>
             <div class="stat"><div class="label">Session score</div><div class="value" id="sessScore">–</div></div>
@@ -119,6 +146,48 @@
         </div>
       </div>
     </section>
+
+    <!-- Break between study blocks -->
+    <div id="breakCard" class="break-card hidden" role="dialog" aria-labelledby="breakTitle">
+      <h2 id="breakTitle">Break time</h2>
+      <div id="breakRing"></div>
+      <p class="muted" id="breakText">Stand up, stretch, get some water. Tracking is paused.</p>
+      <div class="row centered">
+        <button class="btn primary" id="breakNext">Start next block</button>
+        <button class="btn ghost" id="breakSkip">Skip break</button>
+      </div>
+    </div>
+
+    <!-- Quick self check-in -->
+    <div id="checkinCard" class="checkin-card hidden" role="dialog" aria-labelledby="checkinQ">
+      <div id="checkinQ"><strong>Quick check-in:</strong> were you on task just now?</div>
+      <div class="row">
+        <button class="btn small" data-rating="on">Yes</button>
+        <button class="btn small" data-rating="mostly">Mostly</button>
+        <button class="btn small" data-rating="off">No</button>
+        <button class="btn ghost small" data-rating="">Not now</button>
+      </div>
+    </div>
+
+    <!-- End-of-session reflection -->
+    <dialog id="reflectDialog">
+      <form method="dialog" id="reflectForm">
+        <div class="dialog-body">
+          <h2>Quick reflection</h2>
+          <p class="small muted">Optional, takes 20 seconds. Your answers appear next to the camera's estimate in the report.</p>
+          <fieldset class="onb-q"><legend>How focused did you feel?</legend>
+            <div class="chip-group scale" id="feltGroup"></div></fieldset>
+          <fieldset class="onb-q"><legend>What pulled you away? (choose any)</legend>
+            <div class="chip-group" id="pulledGroup"></div></fieldset>
+          <div class="field"><label for="helped">What helped you focus?</label>
+            <input id="helped" maxlength="500" placeholder="e.g. phone in another room, music without lyrics"></div>
+        </div>
+        <div class="dialog-foot">
+          <button type="button" class="btn ghost" id="reflectSkip">Skip</button>
+          <button type="submit" class="btn primary">Save and finish</button>
+        </div>
+      </form>
+    </dialog>
 
     <!-- Calibration overlay -->
     <div id="calStage" class="cal-stage hidden">
