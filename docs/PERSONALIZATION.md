@@ -64,3 +64,46 @@ that would need a human-participant study with approval.
 The session report shows **your ratings next to the camera estimate**, so the
 camera acts as a mirror rather than a judge. Low scores are shown in a neutral
 colour, and "days studied in the last 7" replaces an all-or-nothing streak.
+
+## 4. Gentle audio reminders (`frontend/js/cues.js`)
+
+Goal: bring a distracted student back **without a jump scare**. Sound is off
+until switched on (Settings, or "Sound: on" during a session); volume slider and
+"Test sound" in Settings.
+
+| Choice | Value | Why |
+|---|---|---|
+| Escalation | step 1 visual message, +20 s soft chime, +40 s one calm spoken line, then silence | graduated, self-limiting; avoids alarm fatigue |
+| Onset | gain rises from silence over 0.5 s | the startle reflex is driven by fast rise times with loud broadband sound |
+| Sound | two soft sine notes, falling (E5 to C5), low-pass filtered, ~1.6 s | rising pitch is heard as more urgent (Edworthy, Loxley & Dennis 1991) |
+| Level | peak gain 0.12 x volume (default 35% = 0.042) | warnings should be just above background, not maximal (Patterson 1982) |
+| Spacing | at least 150 s between sounds, at most 8 per hour | prevents habituation and annoyance |
+| Voice | browser's built-in voice, slightly slow, kind wording ("Let's come back to {task}") | calm, non-judgmental prompt |
+| Control | on/off, volume, voice on/off, mute per session | WCAG 2.2 SC 1.4.2 Audio Control |
+
+The old reminder (a 660 Hz beep reaching full volume in 20 ms) was replaced.
+Evidence that prompts help on-task behaviour comes from small single-case
+studies of vibrating timers (e.g. Amato-Zech et al. 2006); applying it to
+camera-triggered audio is untested.
+
+## 5. Signs of tiredness and break suggestions (`frontend/js/fatigue.js`)
+
+A **suggestion**, not a measurement: "You might be getting tired" with the
+reasons listed, plus "Take a break" or "I'm OK, keep going" (snoozes 20 min).
+An **I'm tired** button is always available. Computed in the browser and kept
+separate from the attention engine that the experiment evaluates.
+
+| Sign | Rule (heuristic) | Basis |
+|---|---|---|
+| Eyes closed a lot | > 15% of the last 60 s, sustained for 2 min (eyes-closed = EAR < 0.55 x your open-eye EAR) | PERCLOS (Dinges et al. 1998; FHWA tech brief) |
+| Long, slow blinks | 3+ closures of >= 0.4 s in a minute | blink duration is a better fatigue sign than blink rate (Schleicher et al. 2008) |
+| Yawns | mouth open (inner-lip gap / mouth width > 0.6) >= 1.5 s, 2+ in 10 min | yawning as a drowsiness sign |
+| Focus dropping | last 10 min >= 20 points below the first 10 min | vigilance decrement |
+| Long stretch | 30 min without a break (triggers alone) | micro-break evidence (Albulescu et al. 2022) |
+
+A break is suggested when **2 or more** eye/yawn/focus signs appear together,
+or after a long stretch. Eye frames while looking down more than 20 degrees
+below your neutral pose are ignored (lowered lids while reading notes are not
+tiredness). Blink **rate** is deliberately not used: it barely differs between
+screen and paper reading. None of these thresholds are validated for students
+at a desk; tests in `tests/js/` check the rules work as designed.

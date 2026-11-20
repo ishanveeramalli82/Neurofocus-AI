@@ -71,6 +71,8 @@
     <div id="liveTools" class="row live-tools hidden">
       <button class="btn small" id="calmBtn" aria-pressed="false">Calm focus mode</button>
       <button class="btn small" id="muteBtn" aria-pressed="false">Mute nudges</button>
+      <button class="btn small" id="soundBtn" aria-pressed="false">Sound: off</button>
+      <button class="btn small" id="tiredBtn">I'm tired</button>
       <span class="badge hidden" id="blockChip"></span>
     </div>
 
@@ -84,6 +86,7 @@
       <div class="row centered">
         <button class="btn" id="calmPause">Pause</button>
         <button class="btn danger" id="calmEnd">End session</button>
+        <button class="btn" id="calmTired">I'm tired</button>
         <button class="btn ghost" id="calmExit">Show full view</button>
       </div>
     </section>
@@ -155,6 +158,17 @@
       <div class="row centered">
         <button class="btn primary" id="breakNext">Start next block</button>
         <button class="btn ghost" id="breakSkip">Skip break</button>
+      </div>
+    </div>
+
+    <!-- Tiredness: a gentle break suggestion -->
+    <div id="tiredCard" class="checkin-card tired-card hidden" role="dialog" aria-labelledby="tiredTitle">
+      <strong id="tiredTitle">You might be getting tired</strong>
+      <ul class="small" id="tiredReasons"></ul>
+      <p class="tiny">A short break can help you feel less tired. This is just a suggestion based on the camera.</p>
+      <div class="row">
+        <button class="btn small primary" id="tiredBreak">Take a 5-minute break</button>
+        <button class="btn small ghost" id="tiredLater">I'm OK, keep going</button>
       </div>
     </div>
 

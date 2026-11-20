@@ -25,9 +25,12 @@ DEFAULT_SETTINGS = {
     "checkins": False,             # periodic "was I on task?" self check-ins
     "checkin_every_min": 10,
     "if_then_prompt": False,       # ask for an if-then plan at session start
+    "cue_volume": 35,              # gentle audio reminders: volume 5-100 (soft even at 100)
+    "cue_voice": True,             # spoken reminders after the first soft chime
+    "tired_prompts": True,         # suggest a break when signs of tiredness appear
 }
 FLAG_SETTINGS = ("alert_sound", "show_camera_preview", "nudges", "block_timer", "calm_mode",
-                 "big_timer", "checkins", "if_then_prompt")
+                 "big_timer", "checkins", "if_then_prompt", "cue_voice", "tired_prompts")
 # A real hash of a random string so failed logins for unknown emails take as
 # long as for known ones (prevents account enumeration by timing).
 _DUMMY_HASH = generate_password_hash("not-a-real-password-0f9a")
@@ -133,6 +136,7 @@ def update_profile():
         settings["block_min"] = v.integer(s, "block_min", lo=10, hi=60, default=settings["block_min"])
         settings["checkin_every_min"] = v.integer(s, "checkin_every_min", lo=3, hi=60,
                                                   default=settings["checkin_every_min"])
+        settings["cue_volume"] = v.integer(s, "cue_volume", lo=5, hi=100, default=settings["cue_volume"])
         for flag in FLAG_SETTINGS:
             if flag in s:
                 settings[flag] = bool(s[flag])

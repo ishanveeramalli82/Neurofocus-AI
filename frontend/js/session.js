@@ -2,6 +2,8 @@ import { api } from "./api.js";
 import { VisionTracker, FRAME_HZ } from "./vision.js";
 import { ring, timeline, timeRing } from "./charts.js";
 import { MiniView, miniViewSupport } from "./miniview.js";
+import { unlockAudio, softChime, speak, RefocusLadder } from "./cues.js";
+import { FatigueMonitor } from "./fatigue.js";
 import { $, esc, mountShell, STATE_LABEL, fmtClock, fmtScore, fmtTime, toast, showError, localDate } from "./ui.js";
 
 const user = await mountShell("session");
@@ -61,6 +63,7 @@ $("#setupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("#setupError").classList.add("hidden");
   $("#startBtn").disabled = true;
+  unlockAudio();   // browsers only allow sound after a click
   try {
     const eventId = $("#eventSel").value ? Number($("#eventSel").value) : null;
     const { session } = await api("/api/sessions", {
@@ -195,6 +198,7 @@ function beginTracking(cal) {
     ? `Calibrated. ${calSummary(cal)}`
     : "Running without personal calibration (population-default thresholds). Accuracy may be lower if your camera is off to the side.";
   running = true;
+  fatigue = new FatigueMonitor(cal);
   t0 = performance.now();
   tracker.start(onFrame, t0);
   sendTimer = setInterval(flush, 1000);
@@ -209,6 +213,7 @@ function onFrame(f) {
   f.t = Math.round((f.t - pausedTotal) * 1000) / 1000;
   buffer.push(f);
   lastFeature = f;
+  fatigue?.addFrame(f);
   if ($("#showSensors").checked) renderSensors(f);
 }
 
@@ -259,8 +264,9 @@ function update(r) {
   if (s !== "FOCUSED" && away >= settings.alert_after_s && settings.nudges && !nudgesMuted && !onBreak) {
     alertBox.textContent = `${STATE_LABEL[s]} for ${Math.round(away)} s. Ready to get back to it?`;
     alertBox.classList.remove("hidden");
-    if (!alerted) { alerted = true; chime(); }
   } else alertBox.classList.add("hidden");
+  const nudging = settings.nudges && !nudgesMuted && !onBreak && !paused && s !== "FOCUSED";
+  ladder.update(nudging ? away : 0, elapsedSeconds(), $("#title").value);
   $("#calmState").innerHTML = `<span class="dot s-${s}"></span> ${STATE_LABEL[s]}`;
   Object.assign(liveState, {
     state: s, live: r.live_score, session: r.session_score, distractions: r.distraction_count,
@@ -307,19 +313,13 @@ function setupMiniView() {
   });
 }
 
+// Soft, slowly fading-in chime (see cues.js). Replaces an earlier beep that
+// jumped to full volume in 20 ms, which could feel like a jump scare.
 function chime() {
-  if (!settings.alert_sound) return;
-  try {
-    const ctx = new AudioContext();
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.frequency.value = 660;
-    g.gain.setValueAtTime(0.0001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
-    o.connect(g).connect(ctx.destination);
-    o.start(); o.stop(ctx.currentTime + 0.65);
-  } catch { /* audio not available */ }
+  if (settings.alert_sound) softChime((settings.cue_volume ?? 35) / 100);
 }
+const ladder = new RefocusLadder(() => settings);
+let fatigue = null;
 
 let goalNotified = false;
 function tick() {
@@ -468,14 +468,21 @@ function supportsTick(el, planned) {
   if (settings.block_timer) $("#blockChip").textContent = `Block ${blockNo} · ${fmtClock(Math.max(0, remaining))} left`;
   if (settings.block_timer && !paused && !onBreak && remaining <= 0) startBreak();
   if (!paused && el >= nextCheckinEl) { showCheckin(el); nextCheckinEl = el + settings.checkin_every_min * 60; }
+  if (settings.tired_prompts && fatigue && !paused && !onBreak && el - lastFatigueCheck >= 10) {
+    lastFatigueCheck = el;
+    const res = fatigue.check(el, samples);
+    if (res.tired && $("#tiredCard").classList.contains("hidden")) showTired(res.reasons, false);
+  }
 }
 
-function startBreak() {
+let restBreak = false;
+function startBreak({ rest = false } = {}) {
+  restBreak = rest;
   onBreak = true;
   setPaused(true);
   chime();
   breakEndsAt = performance.now() + settings.break_min * 60000;
-  $("#breakTitle").textContent = `Block ${blockNo} done. Break time!`;
+  $("#breakTitle").textContent = rest ? "Rest break" : `Block ${blockNo} done. Break time!`;
   $("#breakText").textContent = "Stand up, stretch, get some water. Tracking is paused during your break.";
   $("#breakNext").textContent = "Start next block";
   $("#breakCard").classList.remove("hidden");
@@ -485,7 +492,8 @@ function startBreak() {
     if (left <= 0) {
       clearInterval(breakTimer);
       $("#breakTitle").textContent = "Ready to start again?";
-      $("#breakText").textContent = `Block ${blockNo + 1} is next. Click when you're back at your desk.`;
+      $("#breakText").textContent = restBreak ? "Feeling a bit better? Click when you're back at your desk."
+        : `Block ${blockNo + 1} is next. Click when you're back at your desk.`;
       chime();
     }
   };
@@ -496,10 +504,12 @@ function endBreak() {
   clearInterval(breakTimer);
   $("#breakCard").classList.add("hidden");
   onBreak = false;
-  blockNo++;
   setPaused(false);
   const now = performance.now();
-  blockStartEl = (now - t0) / 1000 - pausedTotal;
+  const el = (now - t0) / 1000 - pausedTotal;
+  if (!restBreak || settings.block_timer) { blockNo += restBreak ? 0 : 1; blockStartEl = el; }
+  fatigue?.markBreak(el);
+  $("#tiredCard").classList.add("hidden");
 }
 $("#breakNext").addEventListener("click", endBreak);
 $("#breakSkip").addEventListener("click", endBreak);
@@ -555,3 +565,33 @@ function askReflection() {
     d.showModal();
   });
 }
+
+// ---------------------------------------------------------------- tiredness: suggest a break
+let lastFatigueCheck = 0;
+function showTired(reasons, askedByUser) {
+  $("#tiredTitle").textContent = askedByUser ? "Want to take a break?" : "You might be getting tired";
+  $("#tiredReasons").innerHTML = reasons.map((r) => `<li>${esc(r.charAt(0).toUpperCase() + r.slice(1))}.</li>`).join("");
+  $("#tiredReasons").classList.toggle("hidden", !reasons.length);
+  $("#tiredBreak").textContent = `Take a ${settings.break_min}-minute break`;
+  $("#tiredCard").classList.remove("hidden");
+  if (!askedByUser && settings.alert_sound) {
+    if (settings.cue_voice) speak("You seem a bit tired. How about a short break?", (settings.cue_volume ?? 35) / 100);
+    else chime();
+  }
+}
+$("#tiredBreak").addEventListener("click", () => { $("#tiredCard").classList.add("hidden"); startBreak({ rest: true }); });
+$("#tiredLater").addEventListener("click", () => { $("#tiredCard").classList.add("hidden"); fatigue?.snooze(elapsedSeconds()); });
+for (const id of ["#tiredBtn", "#calmTired"]) $(id).addEventListener("click", () => showTired([], true));
+
+// Session sound controls
+function syncSoundBtn() {
+  $("#soundBtn").textContent = settings.alert_sound ? "Sound: on" : "Sound: off";
+  $("#soundBtn").setAttribute("aria-pressed", String(settings.alert_sound));
+}
+$("#soundBtn").addEventListener("click", () => {
+  unlockAudio();
+  settings.alert_sound = !settings.alert_sound;
+  syncSoundBtn();
+  if (settings.alert_sound) chime();   // let them hear how soft it is
+});
+syncSoundBtn();

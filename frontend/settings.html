@@ -24,7 +24,15 @@
           <div class="field"><label for="breakLen">Break length (min)</label><input id="breakLen" type="number" min="1" max="60"></div>
           <div class="field"><label for="alertAfter">Nudge me after distracted for (s)</label><input id="alertAfter" type="number" min="5" max="600"></div>
         </div>
-        <div class="field"><label class="check"><input type="checkbox" id="sound"> Play a soft chime with nudges</label></div>
+        <h3 class="report-sub">Gentle audio reminders</h3>
+        <p class="tiny">When you drift: first a soft chime that fades in slowly (never a sudden beep), then a calm
+          spoken reminder if you're still away, then one offer of a break. After that it stays quiet.</p>
+        <div class="field"><label class="check"><input type="checkbox" id="sound"> Play audio reminders</label></div>
+        <div class="field"><label class="check"><input type="checkbox" id="cueVoice"> Use a calm spoken voice after the first chime</label></div>
+        <div class="field"><label for="cueVolume">Reminder volume</label>
+          <div class="row"><input id="cueVolume" type="range" min="5" max="100" step="5" class="grow">
+            <button class="btn small" type="button" id="testSound">Test sound</button></div></div>
+        <div class="field"><label class="check"><input type="checkbox" id="tiredPrompts"> Suggest a break when I seem tired</label></div>
         <h3 class="report-sub">Focus support options</h3>
         <p class="tiny">Tools that make studying easier for anyone, especially if focus is hard for you.
           <a href="/onboarding">Retake the "How do you study?" survey</a></p>

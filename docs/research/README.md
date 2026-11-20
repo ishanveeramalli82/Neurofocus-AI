@@ -4,7 +4,8 @@ Background research used to design the onboarding survey, the personal study
 plan and the focus-support features. It is a literature review, separate from
 the science-fair experiment in `research/`.
 
-* `ADHD friendly study app design.md`: the synthesized report.
+* `ADHD friendly study app design.md`: survey, personal plan and focus-support design.
+* `Gentle refocus cues and fatigue breaks.md`: non-startling audio reminders and tiredness signs.
 * `notes/`: the underlying research notes with every citation.
 
 **Check before you cite.** The research was compiled with AI assistance. Some

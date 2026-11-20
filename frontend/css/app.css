@@ -451,3 +451,4 @@ body.calm #live { position: absolute; left: -10000px; top: 0; width: 900px; }
 .row-actions { white-space: nowrap; text-align: right; }
 .row-actions .btn { margin-left: 4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tired-card { left: auto; right: 20px; border-left-color: var(--closed); } .tired-card ul { margin: 0; padding-left: 18px; }

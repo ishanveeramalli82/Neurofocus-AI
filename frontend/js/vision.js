@@ -60,6 +60,9 @@ export function computeFeatures(result, t, W, H) {
     // centred iris offset scaled so +-1 is roughly the comfortable limit of eye rotation
     gaze_h: round(clamp(((r.u + l.u) / 2 - 0.5) * 4, -1, 1), 4),
     gaze_v: round(clamp(((r.v + l.v) / 2) * 4, -1, 1), 4),
+    // Mouth aspect ratio (inner-lip gap / mouth width), used only for the
+    // "signs of tiredness" yawn check. The attention engine ignores it.
+    mar: round(dist(lm[13], lm[14], W, H) / dist(lm[61], lm[291], W, H), 4),
   };
 }
 
